@@ -1,4 +1,5 @@
 import { Channel, Client, Intents, TextChannel } from 'discord.js';
+import { VatsimClient } from '../vatsim/vatsim-client';
 
 interface Config {
     applicationId: string;
@@ -11,14 +12,17 @@ interface Config {
 const isTextChannel = (channel: Channel): channel is TextChannel => channel.isText();
 
 export class DiscordBot {
+    private vatsimClient: VatsimClient;
     private config: Config;
 
-    constructor(config?: Config) {
+    constructor(vatsimClient: VatsimClient, config?: Config) {
+        this.vatsimClient = vatsimClient;
+
         this.config = config ?? {
-            applicationId: process.env.DISCORD_APPLICATIONID!,
-            channelId: process.env.DISCORD_CHANNELID!,
-            publicKey: process.env.DISCORD_PUBLICKEY!,
-            serverId: process.env.DISCORD_SERVERID!,
+            applicationId: process.env.DISCORD_APPLICATION_ID!,
+            channelId: process.env.DISCORD_CHANNEL_ID!,
+            publicKey: process.env.DISCORD_PUBLIC_KEY!,
+            serverId: process.env.DISCORD_SERVER_ID!,
             token: process.env.DISCORD_TOKEN!
         };
     }
@@ -30,7 +34,9 @@ export class DiscordBot {
 
         client.login(this.config.token);
 
-        client.once('ready', () => {
+        client.once('ready', async () => {
+            await this.vatsimClient.scheduleUpdate();
+
             const channel = client.channels.cache.get(this.config.channelId)!;
 
             if (!channel)

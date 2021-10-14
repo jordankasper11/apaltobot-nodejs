@@ -1,8 +1,10 @@
 import dotenv from 'dotenv';
-import { DiscordBot } from './discord/bot'
+import { DiscordBot } from './discord/discord-bot'
+import { VatsimClient } from './vatsim/vatsim-client';
 
 dotenv.config();
 
-const discordBot = new DiscordBot();
+const vatsimClient = new VatsimClient();
+const discordBot = new DiscordBot(vatsimClient);
 
 discordBot.start();
