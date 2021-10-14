@@ -11,7 +11,8 @@
   "author": "Jordan Kasper",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^13.2.0"
+    "discord.js": "^13.2.0",
+    "dotenv": "^10.0.0"
   },
   "devDependencies": {
     "typescript": "^4.4.4"

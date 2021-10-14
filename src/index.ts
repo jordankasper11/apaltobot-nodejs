@@ -1,3 +1,8 @@
-console.log('hello2');
+import dotenv from 'dotenv';
+import { DiscordBot } from './discord/bot'
 
-setInterval(() => console.log('hi'), 1000);
+dotenv.config();
+
+const discordBot = new DiscordBot();
+
+discordBot.start();
