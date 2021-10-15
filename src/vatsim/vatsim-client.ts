@@ -32,7 +32,7 @@ export class VatsimClient {
 
         await this.updateData();
 
-        VatsimClient.updateTimer = setInterval(this.updateData, this.config.refreshInterval * 1000);
+        VatsimClient.updateTimer = setInterval(this.updateData, this.config.refreshInterval);
     };
 
     private updateData = async (): Promise<void> => {

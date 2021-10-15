@@ -1,5 +1,6 @@
 import { Channel, Client, Intents, TextChannel } from 'discord.js';
 import { VatsimClient } from '../vatsim/vatsim-client';
+import { DiscordUserManager } from './discord-users';
 
 interface Config {
     applicationId: string;
@@ -12,22 +13,30 @@ interface Config {
 const isTextChannel = (channel: Channel): channel is TextChannel => channel.isText();
 
 export class DiscordBot {
-    private vatsimClient: VatsimClient;
     private config: Config;
+    private userManager: DiscordUserManager;
+    private vatsimClient: VatsimClient;    
 
-    constructor(vatsimClient: VatsimClient, config?: Config) {
-        this.vatsimClient = vatsimClient;
-
-        this.config = config ?? {
+    constructor(options?: {
+        config?: Config,
+        userManager?: DiscordUserManager,
+        vatsimClient?: VatsimClient
+    }) {
+        this.config = options?.config ?? {
             applicationId: process.env.DISCORD_APPLICATION_ID!,
             channelId: process.env.DISCORD_CHANNEL_ID!,
             publicKey: process.env.DISCORD_PUBLIC_KEY!,
             serverId: process.env.DISCORD_SERVER_ID!,
             token: process.env.DISCORD_TOKEN!
         };
+
+        this.userManager = options?.userManager ?? new DiscordUserManager();
+        this.vatsimClient = options?.vatsimClient ?? new VatsimClient();
     }
 
     start(): void {
+        console.info('Discord bot starting');
+
         const client = new Client({
             intents: [Intents.FLAGS.GUILDS]
         });
@@ -35,6 +44,8 @@ export class DiscordBot {
         client.login(this.config.token);
 
         client.once('ready', async () => {
+            console.info('Discord bot connected');
+            
             await this.vatsimClient.scheduleUpdate();
 
             const channel = client.channels.cache.get(this.config.channelId)!;
