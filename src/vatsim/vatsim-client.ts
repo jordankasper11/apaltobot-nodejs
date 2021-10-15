@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { VatsimData } from "./vatsim-data";
+import { RawVatsimData, VatsimData } from "./vatsim-data";
 
 interface Config {
     dataUrl: string;
@@ -37,9 +37,9 @@ export class VatsimClient {
 
     private updateData = async (): Promise<void> => {
         try {
-            const response = await axios.get<VatsimData>(this.config.dataUrl);
-
-            VatsimClient.data = response.data;
+            const response = await axios.get<RawVatsimData>(this.config.dataUrl);
+            
+            VatsimClient.data = new VatsimData(response.data);
 
             console.log('Retrieved VATSIM data');
         } catch (error) {
