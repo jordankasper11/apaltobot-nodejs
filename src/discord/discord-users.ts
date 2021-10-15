@@ -1,4 +1,5 @@
-import { readFile, writeFile } from 'fs/promises';
+import { constants } from 'fs';
+import { access, readFile, writeFile } from 'fs/promises';
 
 const FILE_ENCODING = 'utf-8';
 
@@ -27,12 +28,22 @@ export class DiscordUserManager {
         };
 
         if (!DiscordUserManager.saveTimer)
-            DiscordUserManager.saveTimer = setInterval(this.saveDiscordUsers, this.config.saveInterval);
+            DiscordUserManager.saveTimer = setInterval(this.saveUsers.bind(this), this.config.saveInterval);
     }
 
-    async getDiscordUsers(): Promise<Array<DiscordUser>> {
+    async getUsers(): Promise<Array<DiscordUser>> {
         if (DiscordUserManager.users)
             return DiscordUserManager.users;
+
+        try {
+            await access(this.config.usersJsonPath, constants.F_OK)
+        } catch {
+            console.warn('Discord users file does not exist');
+
+            DiscordUserManager.users = [];
+
+            return DiscordUserManager.users;
+        }
 
         try {
             const json = await readFile(this.config.usersJsonPath, { encoding: FILE_ENCODING });
@@ -47,17 +58,17 @@ export class DiscordUserManager {
         }
     }
 
-    async getDiscordUser(id: string): Promise<DiscordUser | undefined> {
-        const users = await this.getDiscordUsers();
+    async getUser(id: string): Promise<DiscordUser | undefined> {
+        const users = await this.getUsers();
 
         return users.find(u => u.id == id);
     }
 
-    async saveDiscordUsers(): Promise<void> {
+    async saveUsers(): Promise<void> {
         if (!DiscordUserManager.updated)
             return;
 
-        const users = await this.getDiscordUsers();
+        const users = await this.getUsers();
         const json = JSON.stringify(users, null, 4);
 
         try {
@@ -71,8 +82,8 @@ export class DiscordUserManager {
         }
     }
 
-    async saveDiscordUser(user: DiscordUser): Promise<void> {
-        let users = await this.getDiscordUsers();
+    async saveUser(user: DiscordUser): Promise<void> {
+        let users = await this.getUsers();
 
         users = users.filter(u => u.id != user.id);
 
@@ -85,7 +96,7 @@ export class DiscordUserManager {
     }
 
     async deleteDiscordUser(id: string): Promise<void> {
-        let users = await this.getDiscordUsers();
+        let users = await this.getUsers();
 
         users = users.filter(u => u.id != id);
 
