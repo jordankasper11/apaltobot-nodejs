@@ -1,4 +1,7 @@
 import { Channel, Client, Intents, TextChannel } from 'discord.js';
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v9';
 import { VatsimClient } from '../vatsim/vatsim-client';
 import { DiscordUserManager } from './discord-users';
 
@@ -15,7 +18,7 @@ const isTextChannel = (channel: Channel): channel is TextChannel => channel.isTe
 export class DiscordBot {
     private config: Config;
     private userManager: DiscordUserManager;
-    private vatsimClient: VatsimClient;    
+    private vatsimClient: VatsimClient;
 
     constructor(options?: {
         config?: Config,
@@ -34,8 +37,10 @@ export class DiscordBot {
         this.vatsimClient = options?.vatsimClient ?? new VatsimClient();
     }
 
-    start(): void {
+    async start(): Promise<void> {
         console.info('Discord bot starting');
+
+        await this.registerCommands();
 
         const client = new Client({
             intents: [Intents.FLAGS.GUILDS]
@@ -45,7 +50,7 @@ export class DiscordBot {
 
         client.once('ready', async () => {
             console.info('Discord bot connected');
-            
+
             await this.vatsimClient.scheduleUpdate();
 
             const channel = client.channels.cache.get(this.config.channelId)!;
@@ -59,5 +64,27 @@ export class DiscordBot {
             if (!(channel instanceof TextChannel))
                 throw new Error(`Channel ${this.config.channelId} is not a text channel`);
         });
+    }
+
+    private async registerCommands(): Promise<void> {
+        const commands = [
+            new SlashCommandBuilder()
+                .setName('vatsimlink')
+                .setDescription('Link your VATSIM account')
+                .addStringOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true)),
+            new SlashCommandBuilder()
+                .setName('vatsimunlink')
+                .setDescription('Unlink your VATSIM account')
+        ].map(c => c.toJSON());
+
+        const rest = new REST({ version: '9' }).setToken(this.config.token);
+
+        try {
+            await rest.put(Routes.applicationGuildCommands(this.config.applicationId, this.config.serverId), { body: commands });
+
+            console.info('Registered Discord commands');
+        } catch (error) {
+            console.error('Error registering Discord commands', error);
+        }
     }
 }
