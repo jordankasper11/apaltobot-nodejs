@@ -14,6 +14,11 @@ export interface User {
     vatsimId: number
 }
 
+export interface UserFilter {
+    discordId?: string,
+    vatsimId?: number
+}
+
 export class UserManager {
     private config: Config;
 
@@ -31,9 +36,9 @@ export class UserManager {
             UserManager.saveTimer = setInterval(this.saveUsers.bind(this), this.config.saveInterval);
     }
 
-    async getUsers(): Promise<Array<User>> {
+    private async loadUsers(): Promise<void> {
         if (UserManager.users)
-            return UserManager.users;
+            return;
 
         try {
             await access(this.config.usersJsonPath, constants.F_OK)
@@ -41,16 +46,12 @@ export class UserManager {
             console.warn('Discord users file does not exist');
 
             UserManager.users = [];
-
-            return UserManager.users;
         }
 
         try {
             const json = await readFile(this.config.usersJsonPath, { encoding: FILE_ENCODING });
 
             UserManager.users = json ? JSON.parse(json) : [];
-
-            return UserManager.users;
         } catch (error) {
             console.error('Error loading Discord users', error);
 
@@ -58,18 +59,28 @@ export class UserManager {
         }
     }
 
-    async getUser(id: string): Promise<User | undefined> {
-        const users = await this.getUsers();
+    async getUsers(): Promise<Array<User>> {
+        await this.loadUsers();
 
-        return users.find(u => u.discordId == id);
+        return UserManager.users;
+    }
+
+    async getUser(filter: UserFilter): Promise<User | undefined> {
+        if (!filter.discordId && !filter.vatsimId)
+            return undefined;
+
+        await this.loadUsers();
+
+        return UserManager.users.find(u => (!filter.discordId || u.discordId == filter.discordId) && (!filter.vatsimId || u.vatsimId == filter.vatsimId));
     }
 
     async saveUsers(): Promise<void> {
         if (!UserManager.updated)
             return;
 
-        const users = await this.getUsers();
-        const json = JSON.stringify(users, null, 4);
+        await this.loadUsers();
+
+        const json = JSON.stringify(UserManager.users, null, 4);
 
         try {
             await writeFile(this.config.usersJsonPath, json, { encoding: FILE_ENCODING });
@@ -83,26 +94,31 @@ export class UserManager {
     }
 
     async saveUser(user: User): Promise<void> {
-        let users = await this.getUsers();
+        await this.loadUsers();
+        await this.deleteUser({ discordId: user.discordId, vatsimId: user.vatsimId }, false);
 
-        users = users.filter(u => u.discordId != user.discordId);
-
-        users.push(user);
-
-        UserManager.users = users;
+        UserManager.users = UserManager.users.filter(u => u.discordId != user.discordId);
+        UserManager.users.push(user);
         UserManager.updated = true;
 
         console.info('Added Discord User', user);
     }
 
-    async deleteDiscordUser(id: string): Promise<void> {
-        let users = await this.getUsers();
+    async deleteUser(filter: UserFilter, log: boolean = true): Promise<void> {
+        if (!filter.discordId && !filter.vatsimId)
+            return;
 
-        users = users.filter(u => u.discordId != id);
+        await this.loadUsers();
 
-        UserManager.users = users;
+        const user = await this.getUser(filter);
+
+        if (!user)
+            return;
+
+        UserManager.users = UserManager.users.filter(u => u != user);
         UserManager.updated = true;
 
-        console.info('Deleted Discord user', id);
+        if (log)
+            console.info('Deleted Discord user', user);
     }
 }

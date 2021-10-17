@@ -1,4 +1,4 @@
-import { Channel, Client, CommandInteraction, Guild, GuildMember, Intents, Message, TextChannel } from 'discord.js';
+import { ApplicationCommandPermissionData, Channel, Client, CommandInteraction, Guild, GuildMember, Intents, Message, TextChannel } from 'discord.js';
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
@@ -9,6 +9,7 @@ import { VatsimClient } from '../vatsim/vatsim-client';
 import { User, UserManager } from '../users/user-manager';
 
 interface Config {
+    adminRoleId: string;
     applicationId: string;
     channelId: string;
     guildId: string;
@@ -17,9 +18,11 @@ interface Config {
     updateListingInterval: number;
 }
 
-enum Commands {
-    VatsimLink = 'vatsimlink',
-    VatsimUnlink = 'vatsimunlink'
+enum Command {
+    AddVatsim = "addvatsim",
+    LinkVatsim = 'linkvatsim',
+    RemoveVatsim = "removevatsim",
+    UnlinkVatsim = 'unlinkvatsim'
 }
 
 const isTextChannel = (channel: Channel): channel is TextChannel => channel.isText();
@@ -39,6 +42,7 @@ export class DiscordBot {
         vatsimClient?: VatsimClient
     }) {
         this.config = options?.config ?? {
+            adminRoleId: process.env.DISCORD_ADMIN_ROLE_ID!,
             applicationId: process.env.DISCORD_APPLICATION_ID!,
             channelId: process.env.DISCORD_CHANNEL_ID!,
             guildId: process.env.DISCORD_GUILD_ID!,
@@ -54,8 +58,6 @@ export class DiscordBot {
 
     async start(): Promise<void> {
         console.info('Discord bot starting');
-
-        await this.registerCommands();
 
         const client = new Client({
             intents: [
@@ -74,17 +76,29 @@ export class DiscordBot {
         });
 
         await client.login(this.config.token);
+        await this.registerCommands(client);
     }
 
-    private async registerCommands(): Promise<void> {
+    private async registerCommands(client: Client): Promise<void> {
         const commands = [
             new SlashCommandBuilder()
-                .setName(Commands.VatsimLink)
+                .setName(Command.AddVatsim)
+                .setDescription('Add a VATSIM user')
+                .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true))
+                .addStringOption(option => option.setName('username').setDescription('Username').setRequired(true))
+                .setDefaultPermission(false),
+            new SlashCommandBuilder()
+                .setName(Command.LinkVatsim)
                 .setDescription('Link your VATSIM account')
                 .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true)),
             new SlashCommandBuilder()
-                .setName(Commands.VatsimUnlink)
+                .setName(Command.RemoveVatsim)
+                .setDescription('Remove a VATSIM user')
+                .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true)),
+            new SlashCommandBuilder()
+                .setName(Command.UnlinkVatsim)
                 .setDescription('Unlink your VATSIM account')
+                .setDefaultPermission(false)
         ].map(c => c.toJSON());
 
         const rest = new REST({ version: '9' }).setToken(this.config.token);
@@ -95,6 +109,35 @@ export class DiscordBot {
             console.info('Registered Discord commands');
         } catch (error) {
             console.error('Error registering Discord commands', error);
+
+            throw error;
+        }
+
+        await this.setCommandPermissions(client);
+    }
+
+    private async setCommandPermissions(client: Client): Promise<void> {
+        try {
+            const commands = await client.guilds.cache.get(this.config.guildId)?.commands.fetch();
+            const adminCommandNames = [Command.AddVatsim.toString(), Command.RemoveVatsim.toString()];
+            // const adminCommands = Array.from(commands?.filter(c => adminCommandNames.includes(c.name)) ?? []);
+            const adminCommands = Array.from(commands?.values() ?? []).filter(c => adminCommandNames.includes(c.name));
+
+            for (const command of adminCommands) {
+                const permissions: Array<ApplicationCommandPermissionData> = [
+                    {
+                        id: this.config.adminRoleId,
+                        type: 'ROLE',
+                        permission: true
+                    }
+                ];
+
+                await command.permissions.set({ permissions });
+            }
+
+            console.info('Set Discord command permissions');
+        } catch (error) {
+            console.error('Error setting Discord command permissions', error);
 
             throw error;
         }
@@ -126,25 +169,46 @@ export class DiscordBot {
 
     private onCommand(interaction: CommandInteraction): Promise<void> {
         switch (interaction.commandName) {
-            case Commands.VatsimLink:
-                return this.onVatsimLinkCommand(interaction);
-            case Commands.VatsimUnlink:
-                return this.onVatsimUnlinkCommand(interaction);
+            case Command.AddVatsim:
+                return this.onAddVatsimCommand(interaction);
+            case Command.LinkVatsim:
+                return this.onLinkVatsimCommand(interaction);
+            case Command.RemoveVatsim:
+                return this.onRemoveVatsimCommand(interaction);
+            case Command.UnlinkVatsim:
+                return this.onUnlinkVatsimCommand(interaction);
             default:
                 throw new Error(`Unsupported Discord command: ${interaction.commandName}`);
         }
     }
 
-    private async onVatsimLinkCommand(interaction: CommandInteraction): Promise<void> {
-        const cid = interaction.options.getInteger('cid');
+    private async onAddVatsimCommand(interaction: CommandInteraction): Promise<void> {
+        const cid = interaction.options.getInteger('cid')!;
+        const username = interaction.options.getString('username')!;
 
-        const discordUser: User = {
-            discordId: interaction.member!.user.id,
-            username: interaction.member!.user.username,
-            vatsimId: cid!
+        const user: User = {
+            username: username,
+            vatsimId: cid
         };
 
-        await this.userManager.saveUser(discordUser);
+        await this.userManager.saveUser(user);
+
+        await interaction.reply({
+            content: 'VATSIM activity for this user will be included on the status board within a few minutes.',
+            ephemeral: true
+        });
+    }
+
+    private async onLinkVatsimCommand(interaction: CommandInteraction): Promise<void> {
+        const cid = interaction.options.getInteger('cid')!;
+
+        const user: User = {
+            discordId: interaction.member!.user.id,
+            username: interaction.member!.user.username,
+            vatsimId: cid
+        };
+
+        await this.userManager.saveUser(user);
 
         await interaction.reply({
             content: 'Thanks for your linking your account! Your VATSIM activity will be included on the status board within a few minutes.',
@@ -152,8 +216,30 @@ export class DiscordBot {
         });
     }
 
-    private async onVatsimUnlinkCommand(interaction: CommandInteraction): Promise<void> {
-        await this.userManager.deleteDiscordUser(interaction.member!.user.id);
+    private async onRemoveVatsimCommand(interaction: CommandInteraction): Promise<void> {
+        const vatsimId = interaction.options.getInteger('cid') ?? undefined;
+        const userFilter = { vatsimId };
+        const user = await this.userManager.getUser(userFilter);
+
+        if (!user) {
+            await interaction.reply({
+                content: 'User not found',
+                ephemeral: true
+            });
+
+            return;
+        }
+
+        await this.userManager.deleteUser(userFilter);
+
+        await interaction.reply({
+            content: 'VATSIM activity for this user will be removed from the status board within a few minutes.',
+            ephemeral: true
+        });
+    }
+
+    private async onUnlinkVatsimCommand(interaction: CommandInteraction): Promise<void> {
+        await this.userManager.deleteUser({ discordId: interaction.member!.user.id });
 
         await interaction.reply({
             content: 'Your VATSIM activity will be removed from the status board within a few minutes.',
@@ -349,7 +435,7 @@ export class DiscordBot {
             content += 'No controllers are currently online.\n';
 
         content += '```\n';
-        content +=`_VATSIM Activity last updated on ${DateTime.utc().toFormat('yyyy-MM-dd HHmm')}Z_`;
+        content += `_VATSIM Activity last updated on ${DateTime.utc().toFormat('yyyy-MM-dd HHmm')}Z_`;
 
         return content;
     }
