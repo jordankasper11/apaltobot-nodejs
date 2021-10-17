@@ -41,7 +41,7 @@ export class VatsimClient {
             
             VatsimClient.data = new VatsimData(response.data);
 
-            console.log('Retrieved VATSIM data');
+            console.info('Retrieved VATSIM data');
         } catch (error) {
             console.error('Error retrieving VATSIM data', error);
         }
