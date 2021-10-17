@@ -120,7 +120,6 @@ export class DiscordBot {
         try {
             const commands = await client.guilds.cache.get(this.config.guildId)?.commands.fetch();
             const adminCommandNames = [Command.AddVatsim.toString(), Command.RemoveVatsim.toString()];
-            // const adminCommands = Array.from(commands?.filter(c => adminCommandNames.includes(c.name)) ?? []);
             const adminCommands = Array.from(commands?.values() ?? []).filter(c => adminCommandNames.includes(c.name));
 
             for (const command of adminCommands) {
@@ -249,7 +248,6 @@ export class DiscordBot {
 
     private async updateListing(channel: TextChannel): Promise<void> {
         try {
-            // TODO: Generate message
             let message = this.listingMessage;
 
             if (message && DateTime.fromJSDate(message.createdAt).diffNow('days').days < -13) {
@@ -372,14 +370,14 @@ export class DiscordBot {
                     departure += pilotUser.pilot.flightPlan.departureAirport.padEnd(5);
 
                     if (departureAirport && arrivalAirport) {
-                        const remainingDistance = getDistance({ latitude: pilotUser.pilot.latitude, longitude: pilotUser.pilot.longitude }, { latitude: arrivalAirport.latitude, longitude: arrivalAirport.longitude });
-                        const totalDistance = getDistance({ latitude: departureAirport.latitude, longitude: departureAirport.longitude }, { latitude: arrivalAirport.latitude, longitude: arrivalAirport.longitude });
+                        const remainingDistance = getDistance({ latitude: pilotUser.pilot.latitude, longitude: pilotUser.pilot.longitude }, { latitude: arrivalAirport.latitude, longitude: arrivalAirport.longitude }) / 1000;
+                        const totalDistance = getDistance({ latitude: departureAirport.latitude, longitude: departureAirport.longitude }, { latitude: arrivalAirport.latitude, longitude: arrivalAirport.longitude }) / 1000;
                         const percentComplete = 100 * Math.abs(totalDistance - remainingDistance) / totalDistance;
 
                         for (let i = 0; i < progressIntervals; i++) {
-                            const floor = i / progressIntervals;
+                            const floor = 100 * i / progressIntervals;
 
-                            departure += percentComplete >= floor || percentComplete >= 99.5 ? '+' : '-';
+                            departure += percentComplete > 0.5 && percentComplete >= floor || percentComplete >= 99.5 ? '+' : '-';
                         }
                     }
 

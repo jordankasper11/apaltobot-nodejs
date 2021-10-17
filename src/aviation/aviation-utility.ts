@@ -1,4 +1,4 @@
-import { access, readFile } from 'fs/promises';
+import { readFile } from 'fs/promises';
 import { Airport, RawAirportData } from "./airport";
 
 const FILE_ENCODING = 'utf-8';
