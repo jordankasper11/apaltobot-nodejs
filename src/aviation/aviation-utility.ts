@@ -1,23 +1,17 @@
 import { readFile } from 'fs/promises';
+import { AviationConfig } from '../config';
 import { Airport, RawAirportData } from "./airport";
 
 const FILE_ENCODING = 'utf-8';
-
-interface Config {
-    airportsJsonPath: string;
-}
-
 export class AviationUtility {
-    private config: Config;
+    private readonly config: AviationConfig;
 
     private static airports: {
         [key: string]: Airport
     };
 
-    constructor(config?: Config) {
-        this.config = config ?? {
-            airportsJsonPath: process.env.AVIATION_AIRPORTS_JSON_PATH!
-        };
+    constructor(config?: AviationConfig) {
+        this.config = config ?? new AviationConfig();
     }
 
     private async loadAirports(): Promise<void> {

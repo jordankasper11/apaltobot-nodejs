@@ -1,22 +1,15 @@
 import axios from 'axios';
+import { VatsimConfig } from '../config';
 import { RawVatsimData, VatsimData } from "./vatsim-data";
 
-interface Config {
-    dataUrl: string;
-    refreshInterval: number;
-}
-
 export class VatsimClient {
-    private config: Config;
+    private readonly config: VatsimConfig;
 
     private static data: VatsimData;
     private static updateTimer: NodeJS.Timer;
 
-    constructor(config?: Config) {
-        this.config = config ?? {
-            dataUrl: process.env.VATSIM_DATA_URL!,
-            refreshInterval: parseInt(process.env.VATSIM_REFRESH_INTERVAL!)
-        };
+    constructor(config?: VatsimConfig) {
+        this.config = config ??  new VatsimConfig();
     }
 
     getData = async (): Promise<VatsimData> => {
@@ -32,7 +25,7 @@ export class VatsimClient {
 
         await this.updateData();
 
-        VatsimClient.updateTimer = setInterval(this.updateData, this.config.refreshInterval);
+        VatsimClient.updateTimer = setInterval(this.updateData, this.config.dataRefreshInterval);
     };
 
     private updateData = async (): Promise<void> => {

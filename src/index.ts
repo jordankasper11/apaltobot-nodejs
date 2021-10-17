@@ -1,8 +1,8 @@
-import dotenv from 'dotenv';
+import { config } from './config';
 import { DiscordBot } from './discord/discord-bot'
 
-dotenv.config();
+console.info("Application starting", config);
 
-const discordBot = new DiscordBot();
+const discordBot = new DiscordBot({ config });
 
 discordBot.start();

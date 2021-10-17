@@ -1,12 +1,8 @@
 import { constants } from 'fs';
 import { access, readFile, writeFile } from 'fs/promises';
+import { UsersConfig } from '../config';
 
 const FILE_ENCODING = 'utf-8';
-
-interface Config {
-    usersJsonPath: string;
-    saveInterval: number;
-}
 
 export interface User {
     discordId?: string,
@@ -20,17 +16,14 @@ export interface UserFilter {
 }
 
 export class UserManager {
-    private config: Config;
+    private readonly config: UsersConfig;
 
     private static users: Array<User>;
     private static updated: boolean = false;
     private static saveTimer: NodeJS.Timer;
 
-    constructor(config?: Config) {
-        this.config = config ?? {
-            usersJsonPath: process.env.USERS_JSON_PATH!,
-            saveInterval: parseInt(process.env.USERS_SAVE_INTERVAL!)
-        };
+    constructor(config?: UsersConfig) {
+        this.config = config ??  new UsersConfig();
 
         if (!UserManager.saveTimer)
             UserManager.saveTimer = setInterval(this.saveUsers.bind(this), this.config.saveInterval);
@@ -41,7 +34,7 @@ export class UserManager {
             return;
 
         try {
-            await access(this.config.usersJsonPath, constants.F_OK)
+            await access(this.config.jsonPath, constants.F_OK)
         } catch {
             console.warn('Discord users file does not exist');
 
@@ -49,7 +42,7 @@ export class UserManager {
         }
 
         try {
-            const json = await readFile(this.config.usersJsonPath, { encoding: FILE_ENCODING });
+            const json = await readFile(this.config.jsonPath, { encoding: FILE_ENCODING });
 
             UserManager.users = json ? JSON.parse(json) : [];
         } catch (error) {
@@ -83,7 +76,7 @@ export class UserManager {
         const json = JSON.stringify(UserManager.users, null, 4);
 
         try {
-            await writeFile(this.config.usersJsonPath, json, { encoding: FILE_ENCODING });
+            await writeFile(this.config.jsonPath, json, { encoding: FILE_ENCODING });
 
             UserManager.updated = false;
 

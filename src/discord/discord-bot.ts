@@ -4,19 +4,10 @@ import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { getDistance } from 'geolib';
 import { DateTime } from 'luxon';
+import { config, Config } from '../config';
 import { AviationUtility } from '../aviation/aviation-utility';
 import { VatsimClient } from '../vatsim/vatsim-client';
 import { User, UserManager } from '../users/user-manager';
-
-interface Config {
-    adminRoleId: string;
-    applicationId: string;
-    channelId: string;
-    guildId: string;
-    publicKey: string;
-    token: string;
-    updateListingInterval: number;
-}
 
 enum Command {
     AddVatsim = "addvatsim",
@@ -28,10 +19,10 @@ enum Command {
 const isTextChannel = (channel: Channel): channel is TextChannel => channel.isText();
 
 export class DiscordBot {
-    private config: Config;
-    private aviationUtility: AviationUtility;
-    private userManager: UserManager;
-    private vatsimClient: VatsimClient;
+    private readonly config: Config;
+    private readonly aviationUtility: AviationUtility;
+    private readonly userManager: UserManager;
+    private readonly vatsimClient: VatsimClient;
     private updateListingTimer?: NodeJS.Timer;
     private listingMessage?: Message;
 
@@ -41,19 +32,10 @@ export class DiscordBot {
         userManager?: UserManager,
         vatsimClient?: VatsimClient
     }) {
-        this.config = options?.config ?? {
-            adminRoleId: process.env.DISCORD_ADMIN_ROLE_ID!,
-            applicationId: process.env.DISCORD_APPLICATION_ID!,
-            channelId: process.env.DISCORD_CHANNEL_ID!,
-            guildId: process.env.DISCORD_GUILD_ID!,
-            publicKey: process.env.DISCORD_PUBLIC_KEY!,
-            token: process.env.DISCORD_TOKEN!,
-            updateListingInterval: parseInt(process.env.DISCORD_UPDATE_LISTING_INTERVAL!)
-        };
-
-        this.aviationUtility = options?.aviationUtility ?? new AviationUtility();
-        this.userManager = options?.userManager ?? new UserManager();
-        this.vatsimClient = options?.vatsimClient ?? new VatsimClient();
+        this.config = config ?? new Config();
+        this.aviationUtility = options?.aviationUtility ?? new AviationUtility(this.config.aviation);
+        this.userManager = options?.userManager ?? new UserManager(this.config.users);
+        this.vatsimClient = options?.vatsimClient ?? new VatsimClient(this.config.vatsim);
     }
 
     async start(): Promise<void> {
@@ -75,7 +57,7 @@ export class DiscordBot {
             return this.onCommand(interaction);
         });
 
-        await client.login(this.config.token);
+        await client.login(this.config.discord.token);
         await this.registerCommands(client);
     }
 
@@ -101,10 +83,10 @@ export class DiscordBot {
                 .setDefaultPermission(false)
         ].map(c => c.toJSON());
 
-        const rest = new REST({ version: '9' }).setToken(this.config.token);
+        const rest = new REST({ version: '9' }).setToken(this.config.discord.token);
 
         try {
-            await rest.put(Routes.applicationGuildCommands(this.config.applicationId, this.config.guildId), { body: commands });
+            await rest.put(Routes.applicationGuildCommands(this.config.discord.applicationId, this.config.discord.guildId), { body: commands });
 
             console.info('Registered Discord commands');
         } catch (error) {
@@ -118,14 +100,14 @@ export class DiscordBot {
 
     private async setCommandPermissions(client: Client): Promise<void> {
         try {
-            const commands = await client.guilds.cache.get(this.config.guildId)?.commands.fetch();
+            const commands = await client.guilds.cache.get(this.config.discord.guildId)?.commands.fetch();
             const adminCommandNames = [Command.AddVatsim.toString(), Command.RemoveVatsim.toString()];
             const adminCommands = Array.from(commands?.values() ?? []).filter(c => adminCommandNames.includes(c.name));
 
             for (const command of adminCommands) {
                 const permissions: Array<ApplicationCommandPermissionData> = [
                     {
-                        id: this.config.adminRoleId,
+                        id: this.config.discord.adminRoleId,
                         type: 'ROLE',
                         permission: true
                     }
@@ -145,16 +127,16 @@ export class DiscordBot {
     private async onReady(client: Client): Promise<void> {
         console.info('Discord bot connected');
 
-        const channel = client.channels.cache.get(this.config.channelId)!;
+        const channel = client.channels.cache.get(this.config.discord.channelId)!;
 
         if (!channel)
-            throw new Error(`Channel ${this.config.channelId} not found`);
+            throw new Error(`Channel ${this.config.discord.channelId} not found`);
 
         if (channel.deleted)
-            throw new Error(`Channel ${this.config.channelId} is deleted`);
+            throw new Error(`Channel ${this.config.discord.channelId} is deleted`);
 
         if (!(channel instanceof TextChannel))
-            throw new Error(`Channel ${this.config.channelId} is not a text channel`);
+            throw new Error(`Channel ${this.config.discord.channelId} is not a text channel`);
 
         await this.vatsimClient.scheduleUpdate();
 
@@ -163,7 +145,7 @@ export class DiscordBot {
 
         await this.updateListing(channel);
 
-        setInterval(async () => await this.updateListing(channel), this.config.updateListingInterval);
+        setInterval(async () => await this.updateListing(channel), this.config.discord.updateListingInterval);
     }
 
     private onCommand(interaction: CommandInteraction): Promise<void> {
