@@ -251,7 +251,7 @@ export class DiscordBot {
 
         if (pilotUsers.length) {
             const progressIntervals = 20;
-            const usernameColumn = getColumn('User', getMaxLength(pilotUsers.map(u => getUsername(u.user, u.guildMember))), columnSeparator);
+            const usernameColumn = getColumn('  User', getMaxLength(pilotUsers.map(u => getUsername(u.user, u.guildMember))), columnSeparator);
             const callsignColumn = getColumn('ID', getMaxLength(pilotUsers.map(u => u.pilot?.callsign)), columnSeparator);
             const aircraftColumn = getColumn('A/C', getMaxLength(pilotUsers.map(u => u.pilot?.flightPlan?.aircraftShort)), columnSeparator);
             const departureColumn = getColumn('DEP', 4, 1 + progressIntervals + 1);
@@ -271,7 +271,7 @@ export class DiscordBot {
             for (const pilotUser of pilotUsers) {
                 let row = '';
 
-                row += addValue(usernameColumn, getUsername(pilotUser.user, pilotUser.guildMember));
+                row += addValue(usernameColumn, (pilotUser.guildMember ? '* ' : '  ') + getUsername(pilotUser.user, pilotUser.guildMember));
                 row += addValue(callsignColumn, pilotUser.pilot?.callsign);
                 row += addValue(aircraftColumn, pilotUser.pilot?.flightPlan?.aircraftShort);
 
@@ -322,7 +322,7 @@ export class DiscordBot {
             .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
 
         if (controllerUsers.length) {
-            const usernameColumn = getColumn('User', getMaxLength(controllerUsers.map(u => getUsername(u.user, u.guildMember))), columnSeparator);
+            const usernameColumn = getColumn('  User', getMaxLength(controllerUsers.map(u => getUsername(u.user, u.guildMember))), columnSeparator);
             const callsignColumn = getColumn('ID', getMaxLength(controllerUsers.map(u => u.controller?.callsign)), columnSeparator);
             const onlineColumn = getColumn('Online', 6, 0);
 
@@ -338,7 +338,7 @@ export class DiscordBot {
             for (const controllerUser of controllerUsers) {
                 let row = '';
 
-                row += addValue(usernameColumn, getUsername(controllerUser.user, controllerUser.guildMember));
+                row += addValue(usernameColumn, (controllerUser.guildMember ? '* ' : '  ') + getUsername(controllerUser.user, controllerUser.guildMember));
                 row += addValue(callsignColumn, controllerUser.controller?.callsign);
                 row += addValue(onlineColumn, DateTime.utc().diff(DateTime.fromJSDate(controllerUser.controller?.onlineSince!)).toFormat('hh:mm'));
 
