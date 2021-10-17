@@ -1,0 +1,14 @@
+version: '3.9'
+services:     
+  apaltobot:
+    container_name: 'apaltobot'
+    build:
+      context: .
+    image: docker.pkg.github.com/jordankasper11/apaltobot-node/apaltobot
+    volumes:
+      - './data:/data'
+    env_file:
+      - .env
+    environment:
+      - AVIATION_AIRPORTS_JSON_PATH=/data/airports.json
+      - USERS_JSON_PATH=/data/users.json
