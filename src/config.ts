@@ -1,10 +1,12 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 abstract class BaseConfig {
-    protected setNumber(propertyName: string, value?: number, defaultValue?: number, required: boolean = true): number | undefined {
-        value = value && !Number.isNaN(parseFloat(<any>value)) ? value : defaultValue;
+    protected setNumber(propertyName: string, value?: number, defaultValue?: number, required = true): number | undefined {
+        value = value && value != null && !Number.isNaN(value) ? value : defaultValue;
 
         if (required && !value)
             throw new Error(`${propertyName} is required`);
@@ -12,7 +14,7 @@ abstract class BaseConfig {
         return value;
     }
 
-    protected setString(propertyName: string, value?: string, defaultValue?: string, required: boolean = true): string | undefined {
+    protected setString(propertyName: string, value?: string, defaultValue?: string, required = true): string | undefined {
         value = value ?? defaultValue;
 
         if (required && !value)

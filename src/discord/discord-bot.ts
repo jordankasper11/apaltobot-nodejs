@@ -127,7 +127,7 @@ export class DiscordBot {
     private async onReady(client: Client): Promise<void> {
         console.info('Discord bot connected');
 
-        const channel = client.channels.cache.get(this.config.discord.channelId)!;
+        const channel = client.channels.cache.get(this.config.discord.channelId);
 
         if (!channel)
             throw new Error(`Channel ${this.config.discord.channelId} not found`);
@@ -135,7 +135,7 @@ export class DiscordBot {
         if (channel.deleted)
             throw new Error(`Channel ${this.config.discord.channelId} is deleted`);
 
-        if (!(channel instanceof TextChannel))
+        if (!(isTextChannel(channel)))
             throw new Error(`Channel ${this.config.discord.channelId} is not a text channel`);
 
         await this.vatsimClient.scheduleUpdate();
@@ -164,8 +164,14 @@ export class DiscordBot {
     }
 
     private async onAddVatsimCommand(interaction: CommandInteraction): Promise<void> {
-        const cid = interaction.options.getInteger('cid')!;
-        const username = interaction.options.getString('username')!;
+        const cid = interaction.options.getInteger('cid');
+        const username = interaction.options.getString('username');
+
+        if (!cid)
+            throw new Error(`cid argument is required for ${Command.AddVatsim} Discord command`);
+
+        if (!username)
+            throw new Error(`username argument is required for ${Command.AddVatsim} Discord command`);
 
         const user: User = {
             username: username,
@@ -181,11 +187,14 @@ export class DiscordBot {
     }
 
     private async onLinkVatsimCommand(interaction: CommandInteraction): Promise<void> {
-        const cid = interaction.options.getInteger('cid')!;
+        const cid = interaction.options.getInteger('cid');
+
+        if (!cid)
+            throw new Error(`cid argument is required for ${Command.LinkVatsim} Discord command`);
 
         const user: User = {
-            discordId: interaction.member!.user.id,
-            username: interaction.member!.user.username,
+            discordId: interaction.member?.user.id,
+            username: interaction.member?.user.username,
             vatsimId: cid
         };
 
@@ -220,7 +229,7 @@ export class DiscordBot {
     }
 
     private async onUnlinkVatsimCommand(interaction: CommandInteraction): Promise<void> {
-        await this.userManager.deleteUser({ discordId: interaction.member!.user.id });
+        await this.userManager.deleteUser({ discordId: interaction.member?.user.id });
 
         await interaction.reply({
             content: 'Your VATSIM activity will be removed from the status board within a few minutes.',
@@ -310,7 +319,7 @@ export class DiscordBot {
             .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
 
         const columnSeparator = 3;
-        let content: string = '';
+        let content = '';
 
         content += '**Flights**\n';
         content += '```';
@@ -406,7 +415,7 @@ export class DiscordBot {
 
                 row += addValue(usernameColumn, (controllerUser.guildMember ? '* ' : '  ') + getUsername(controllerUser.user, controllerUser.guildMember));
                 row += addValue(callsignColumn, controllerUser.controller?.callsign);
-                row += addValue(onlineColumn, DateTime.utc().diff(DateTime.fromJSDate(controllerUser.controller?.onlineSince!)).toFormat('hh:mm'));
+                row += addValue(onlineColumn, controllerUser?.controller?.onlineSince ? DateTime.utc().diff(DateTime.fromJSDate(controllerUser.controller?.onlineSince)).toFormat('hh:mm') : '');
 
                 content += `${row}\n`;
             }
@@ -415,7 +424,7 @@ export class DiscordBot {
             content += 'No controllers are currently online.\n';
 
         content += '```\n';
-        content += `_VATSIM Activity last updated on ${DateTime.utc().toFormat('yyyy-MM-dd HHmm')}Z_`;
+        content += `_VATSIM data last updated on ${DateTime.fromJSDate(vatsimData.overview.lastUpdated).toFormat('yyyy-MM-dd HHmm')}Z_`;
 
         return content;
     }

@@ -1,4 +1,3 @@
-
 interface RawVatsimOverview {
     version: number,
     connected_clients: number,
@@ -268,4 +267,4 @@ export class VatsimData {
             this.facilities = data.facilities?.map(f => new VatsimFacility(f));
         }
     }
-};
+}

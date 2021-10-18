@@ -39,4 +39,4 @@ export class VatsimClient {
             console.error('Error retrieving VATSIM data', error);
         }
     };
-};
+}

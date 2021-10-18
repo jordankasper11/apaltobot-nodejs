@@ -19,7 +19,7 @@ export class UserManager {
     private readonly config: UsersConfig;
 
     private static users: Array<User>;
-    private static updated: boolean = false;
+    private static updated = false;
     private static saveTimer: NodeJS.Timer;
 
     constructor(config?: UsersConfig) {
@@ -97,7 +97,7 @@ export class UserManager {
         console.info('Added Discord User', user);
     }
 
-    async deleteUser(filter: UserFilter, log: boolean = true): Promise<void> {
+    async deleteUser(filter: UserFilter, log = true): Promise<void> {
         if (!filter.discordId && !filter.vatsimId)
             return;
 
