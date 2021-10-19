@@ -326,7 +326,7 @@ export class DiscordBot {
 
         if (pilotUsers.length) {
             const progressIntervals = 20;
-            const usernameColumn = getColumn('  User', getMaxLength(pilotUsers.map(u => getUsername(u.user, u.guildMember))), columnSeparator);
+            const usernameColumn = getColumn('  User', getMaxLength(pilotUsers.map(u => getUsername(u.user, u.guildMember))) + 2, columnSeparator);
             const callsignColumn = getColumn('ID', getMaxLength(pilotUsers.map(u => u.pilot?.callsign)), columnSeparator);
             const aircraftColumn = getColumn('A/C', getMaxLength(pilotUsers.map(u => u.pilot?.flightPlan?.aircraftShort)), columnSeparator);
             const departureColumn = getColumn('DEP', 4, 1 + progressIntervals + 1);
@@ -397,7 +397,7 @@ export class DiscordBot {
             .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
 
         if (controllerUsers.length) {
-            const usernameColumn = getColumn('  User', getMaxLength(controllerUsers.map(u => getUsername(u.user, u.guildMember))), columnSeparator);
+            const usernameColumn = getColumn('  User', getMaxLength(controllerUsers.map(u => getUsername(u.user, u.guildMember))) + 2, columnSeparator);
             const callsignColumn = getColumn('ID', getMaxLength(controllerUsers.map(u => u.controller?.callsign)), columnSeparator);
             const onlineColumn = getColumn('Online', 6, 0);
 
