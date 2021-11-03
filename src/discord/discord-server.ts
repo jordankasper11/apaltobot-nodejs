@@ -38,6 +38,9 @@ export class DiscordServer {
     }
 
     async start(client: Client, updateListingInterval: number): Promise<void> {
+        console.log(`TODO REMOVE: ${this.config.name} started!`);
+        
+        return;
         await this.registerCommands(client);
         await this.scheduleUpdates(client, updateListingInterval);
 

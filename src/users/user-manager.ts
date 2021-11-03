@@ -1,6 +1,8 @@
 import { constants } from 'fs';
 import { access, readFile, writeFile } from 'fs/promises';
+import { inject, injectable } from 'inversify';
 import { UsersConfig } from '../config';
+import { TYPES } from '../inversify';
 
 const FILE_ENCODING = 'utf-8';
 
@@ -15,6 +17,7 @@ export interface UserFilter {
     vatsimId?: number
 }
 
+@injectable()
 export class UserManager {
     private readonly config: UsersConfig;
 
@@ -22,8 +25,8 @@ export class UserManager {
     private static updated = false;
     private static saveTimer: NodeJS.Timer;
 
-    constructor(config?: UsersConfig) {
-        this.config = config ??  new UsersConfig();
+    constructor(@inject(TYPES.UsersConfig) config: UsersConfig) {
+        this.config = config;
 
         if (!UserManager.saveTimer)
             UserManager.saveTimer = setInterval(this.saveUsers.bind(this), this.config.saveInterval);

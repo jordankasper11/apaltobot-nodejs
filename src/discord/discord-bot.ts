@@ -1,12 +1,13 @@
-import { Channel, Client, Intents, TextChannel } from 'discord.js';
+import { Client, Intents } from 'discord.js';
 import { DiscordConfig } from '../config';
 import { AviationUtility } from '../aviation/aviation-utility';
 import { VatsimClient } from '../vatsim/vatsim-client';
-import { User, UserManager } from '../users/user-manager';
+import {  UserManager } from '../users/user-manager';
 import { DiscordServer } from './discord-server';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../inversify';
 
-const isTextChannel = (channel: Channel): channel is TextChannel => channel.isText();
-
+@injectable()
 export class DiscordBot {
     private readonly config: DiscordConfig;
     private readonly aviationUtility: AviationUtility;
@@ -15,7 +16,11 @@ export class DiscordBot {
     private servers: Array<DiscordServer> = [];
     private client?: Client;
 
-    constructor(config: DiscordConfig, aviationUtility: AviationUtility, userManager: UserManager, vatsimClient: VatsimClient) {
+    constructor(
+        @inject(TYPES.DiscordConfig) config: DiscordConfig,
+        aviationUtility: AviationUtility,
+        userManager: UserManager,
+        vatsimClient: VatsimClient) {
         this.config = config;
         this.aviationUtility = aviationUtility;
         this.userManager = userManager;

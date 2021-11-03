@@ -1,8 +1,12 @@
 import { readFile } from 'fs/promises';
+import { inject, injectable } from 'inversify';
 import { AviationConfig } from '../config';
+import { TYPES } from '../inversify';
 import { Airport, RawAirportData } from "./airport";
 
 const FILE_ENCODING = 'utf-8';
+
+@injectable()
 export class AviationUtility {
     private readonly config: AviationConfig;
 
@@ -10,8 +14,8 @@ export class AviationUtility {
         [key: string]: Airport
     };
 
-    constructor(config?: AviationConfig) {
-        this.config = config ?? new AviationConfig();
+    constructor(@inject(TYPES.AviationConfig) config: AviationConfig) {
+        this.config = config;
     }
 
     private async loadAirports(): Promise<void> {

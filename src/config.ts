@@ -24,15 +24,17 @@ abstract class BaseConfig {
     }
 }
 
-export class AviationConfig extends BaseConfig {
+export interface AviationConfig {
+    airportsJsonPath: string;
+}
+
+class DefaultAviationConfig extends BaseConfig implements AviationConfig {
     readonly airportsJsonPath: string;
 
-    constructor(data?: {
-        airportsJsonPath?: string
-    }) {
+    constructor() {
         super();
 
-        this.airportsJsonPath = this.setString('airportsJsonPath', data?.airportsJsonPath ?? process.env.AVIATION_AIRPORTS_JSON_PATH)!;
+        this.airportsJsonPath = this.setString('airportsJsonPath', process.env.AVIATION_AIRPORTS_JSON_PATH)!;
     }
 }
 
@@ -43,89 +45,74 @@ export interface DiscordServerConfig {
     readonly adminRoleId: string;
 }
 
-export class DiscordConfig extends BaseConfig {
+export interface DiscordConfig {
+    applicationId: string;
+    publicKey: string;
+    token: string;
+    updateListingInterval: number;
+    servers: Array<DiscordServerConfig>;
+}
+
+class DefaultDiscordConfig extends BaseConfig implements DiscordConfig {
     readonly applicationId: string;
     readonly publicKey: string;
     readonly token: string;
     readonly updateListingInterval: number;
     readonly servers: Array<DiscordServerConfig>;
 
-    constructor(data?: {
-        applicationId?: string,
-        publicKey?: string,
-        token?: string,
-        updateListingInterval?: number,
-        servers?: Array<DiscordServerConfig>
-    }) {
+    constructor() {
         super();
 
-        this.applicationId = this.setString('applicationId', data?.applicationId ?? process.env.DISCORD_APPLICATION_ID)!;
-        this.publicKey = this.setString('publicKey', data?.publicKey ?? process.env.DISCORD_PUBLIC_KEY)!;
-        this.token = this.setString('token', data?.token ?? process.env.DISCORD_TOKEN)!;
-        this.updateListingInterval = this.setNumber('updateListingInterval', data?.updateListingInterval ?? parseInt(process.env.DISCORD_UPDATE_LISTING_INTERVAL!), 60000)!;
+        this.applicationId = this.setString('applicationId', process.env.DISCORD_APPLICATION_ID)!;
+        this.publicKey = this.setString('publicKey', process.env.DISCORD_PUBLIC_KEY)!;
+        this.token = this.setString('token', process.env.DISCORD_TOKEN)!;
+        this.updateListingInterval = this.setNumber('updateListingInterval', parseInt(process.env.DISCORD_UPDATE_LISTING_INTERVAL!), 60000)!;
         this.servers = []; // TODO: load from file, if empty pull from .env
     }
 }
 
-export class UsersConfig extends BaseConfig {
+export interface UsersConfig {
+    readonly jsonPath: string;
+    readonly saveInterval: number;
+}
+
+class DefaultUsersConfig extends BaseConfig implements UsersConfig {
     readonly jsonPath: string;
     readonly saveInterval: number;
 
-    constructor(data?: {
-        jsonPath?: string,
-        saveInterval?: number
-    }) {
+    constructor() {
         super();
 
-        this.jsonPath = this.setString('jsonPath', data?.jsonPath ?? process.env.USERS_JSON_PATH)!;
-        this.saveInterval = this.setNumber('saveInterval', data?.saveInterval ?? parseInt(process.env.USERS_SAVE_INTERVAL!), 15000)!;
+        this.jsonPath = this.setString('jsonPath', process.env.USERS_JSON_PATH)!;
+        this.saveInterval = this.setNumber('saveInterval', parseInt(process.env.USERS_SAVE_INTERVAL!), 15000)!;
     }
 }
 
-export class VatsimConfig extends BaseConfig {
+export interface VatsimConfig {
+    readonly dataUrl: string;
+    readonly dataRefreshInterval: number;
+}
+
+class DefaultVatsimConfig extends BaseConfig implements VatsimConfig {
     readonly dataUrl: string;
     readonly dataRefreshInterval: number;
 
-    constructor(data?: {
-        dataUrl?: string,
-        dataRefreshInterval?: number
-    }) {
+    constructor() {
         super();
 
-        this.dataUrl = this.setString('dataUrl', data?.dataUrl ?? process.env.VATSIM_DATA_URL, 'https://data.vatsim.net/v3/vatsim-data.json')!;
-        this.dataRefreshInterval = this.setNumber('dataRefreshInterval', data?.dataRefreshInterval ?? parseInt(process.env.VATSIM_DATA_REFRESH_INTERVAL!), 120000)!;
+        this.dataUrl = this.setString('dataUrl', process.env.VATSIM_DATA_URL, 'https://data.vatsim.net/v3/vatsim-data.json')!;
+        this.dataRefreshInterval = this.setNumber('dataRefreshInterval', parseInt(process.env.VATSIM_DATA_REFRESH_INTERVAL!), 120000)!;
     }
 }
 
-export class Config extends BaseConfig {
-    readonly aviation: AviationConfig;
-    readonly discord: DiscordConfig;
-    readonly users: UsersConfig;
-    readonly vatsim: VatsimConfig;
+export const aviationConfig = new DefaultAviationConfig();
+export const discordConfig = new DefaultDiscordConfig();
+export const usersConfig = new DefaultUsersConfig();
+export const vatsimConfig = new DefaultVatsimConfig();
 
-    constructor(data?: {
-        aviation?: AviationConfig,
-        discord?: DiscordConfig,
-        users?: UsersConfig,
-        vatsim?: VatsimConfig
-    }) {
-        super();
-
-        this.aviation = data?.aviation ?? new AviationConfig();
-        this.discord = data?.discord ?? new DiscordConfig();
-        this.users = data?.users ?? new UsersConfig();
-        this.vatsim = data?.vatsim ?? new VatsimConfig();
-    }
-}
-
-export const aviationConfig = new AviationConfig();
-export const discordConfig = new DiscordConfig();
-export const usersConfig = new UsersConfig();
-export const vatsimConfig = new VatsimConfig();
-
-export const config = new Config({
+export const defaultConfig = {
     aviation: aviationConfig,
     discord: discordConfig,
     users: usersConfig,
     vatsim: vatsimConfig
-});
+};
