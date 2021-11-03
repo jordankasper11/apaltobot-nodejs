@@ -4,7 +4,7 @@ import { AviationUtility } from './aviation/aviation-utility';
 import { AviationConfig, defaultConfig, DiscordConfig, UsersConfig, VatsimConfig } from './config';
 import { DiscordBot } from './discord/discord-bot'
 import { TYPES } from './inversify';
-import { UserManager } from './users/user-manager';
+import { UserManagerFactory } from './users/user-manager';
 import { VatsimClient } from './vatsim/vatsim-client';
 
 console.info("Application starting", defaultConfig);
@@ -16,7 +16,7 @@ container.bind<DiscordConfig>(TYPES.DiscordConfig).toConstantValue(defaultConfig
 container.bind<UsersConfig>(TYPES.UsersConfig).toConstantValue(defaultConfig.users);
 container.bind<VatsimConfig>(TYPES.VatsimConfig).toConstantValue(defaultConfig.vatsim);
 container.bind(AviationUtility).to(AviationUtility);
-container.bind(UserManager).to(UserManager);
+container.bind(UserManagerFactory).to(UserManagerFactory);
 container.bind(VatsimClient).to(VatsimClient);
 container.bind(DiscordBot).to(DiscordBot);
 

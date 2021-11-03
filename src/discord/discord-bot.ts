@@ -2,7 +2,7 @@ import { Client, Intents } from 'discord.js';
 import { DiscordConfig } from '../config';
 import { AviationUtility } from '../aviation/aviation-utility';
 import { VatsimClient } from '../vatsim/vatsim-client';
-import {  UserManager } from '../users/user-manager';
+import { UserManagerFactory } from '../users/user-manager';
 import { DiscordServer } from './discord-server';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../inversify';
@@ -11,7 +11,7 @@ import { TYPES } from '../inversify';
 export class DiscordBot {
     private readonly config: DiscordConfig;
     private readonly aviationUtility: AviationUtility;
-    private readonly userManager: UserManager;
+    private readonly userManagerFactory: UserManagerFactory;
     private readonly vatsimClient: VatsimClient;
     private servers: Array<DiscordServer> = [];
     private client?: Client;
@@ -19,11 +19,12 @@ export class DiscordBot {
     constructor(
         @inject(TYPES.DiscordConfig) config: DiscordConfig,
         aviationUtility: AviationUtility,
-        userManager: UserManager,
-        vatsimClient: VatsimClient) {
+        userManagerFactory: UserManagerFactory,
+        vatsimClient: VatsimClient
+    ) {
         this.config = config;
         this.aviationUtility = aviationUtility;
-        this.userManager = userManager;
+        this.userManagerFactory = userManagerFactory;
         this.vatsimClient = vatsimClient;
     }
 
@@ -61,7 +62,7 @@ export class DiscordBot {
                 serverConfig,
                 this.config.applicationId,
                 this.config.token,
-                this.userManager,
+                this.userManagerFactory,
                 this.vatsimClient,
                 this.aviationUtility
             );

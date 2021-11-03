@@ -7,7 +7,7 @@ import { DateTime } from 'luxon';
 import { DiscordServerConfig } from '../config';
 import { AviationUtility } from '../aviation/aviation-utility';
 import { VatsimClient } from '../vatsim/vatsim-client';
-import { User, UserManager } from '../users/user-manager';
+import { User, UserManager, UserManagerFactory } from '../users/user-manager';
 
 enum Command {
     AddVatsim = "addvatsim",
@@ -28,19 +28,18 @@ export class DiscordServer {
     private updateListingTimer?: NodeJS.Timer;
     private listingMessage?: Message;
 
-    constructor(config: DiscordServerConfig, discordApplicationId: string, discordToken: string, userManager: UserManager, vatsimClient: VatsimClient, aviationUtility: AviationUtility) {
+    constructor(config: DiscordServerConfig, discordApplicationId: string, discordToken: string, userManagerFactory: UserManagerFactory, vatsimClient: VatsimClient, aviationUtility: AviationUtility) {
         this.config = config;
         this.discordApplicationId = discordApplicationId;
         this.discordToken = discordToken;
-        this.userManager = userManager;
+        this.userManager = userManagerFactory.createUserManager(`${config.name}.json`);
         this.vatsimClient = vatsimClient;
         this.aviationUtility = aviationUtility;
     }
 
     async start(client: Client, updateListingInterval: number): Promise<void> {
-        console.log(`TODO REMOVE: ${this.config.name} started!`);
-        
-        return;
+        console.info(`Discord bot monitoring ${this.config.name}`);
+
         await this.registerCommands(client);
         await this.scheduleUpdates(client, updateListingInterval);
 

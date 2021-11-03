@@ -1,4 +1,5 @@
 import { constants } from 'fs';
+import { join } from 'path';
 import { access, readFile, writeFile } from 'fs/promises';
 import { inject, injectable } from 'inversify';
 import { UsersConfig } from '../config';
@@ -18,15 +19,29 @@ export interface UserFilter {
 }
 
 @injectable()
+export class UserManagerFactory {
+    private readonly config: UsersConfig;
+
+    constructor(@inject(TYPES.UsersConfig) config: UsersConfig) {
+        this.config = config;
+    }
+
+    createUserManager(fileName: string): UserManager {
+        return new UserManager(this.config, fileName);
+    }
+}
+
 export class UserManager {
     private readonly config: UsersConfig;
+    private readonly fileName: string;
 
     private static users: Array<User>;
     private static updated = false;
     private static saveTimer: NodeJS.Timer;
 
-    constructor(@inject(TYPES.UsersConfig) config: UsersConfig) {
+    constructor(config: UsersConfig, fileName: string) {
         this.config = config;
+        this.fileName = fileName;
 
         if (!UserManager.saveTimer)
             UserManager.saveTimer = setInterval(this.saveUsers.bind(this), this.config.saveInterval);
@@ -36,8 +51,10 @@ export class UserManager {
         if (UserManager.users)
             return;
 
+        const filePath = join(this.config.jsonPath, this.fileName);
+
         try {
-            await access(this.config.jsonPath, constants.F_OK)
+            await access(filePath, constants.F_OK)
         } catch {
             console.warn('Discord users file does not exist');
 
@@ -45,7 +62,7 @@ export class UserManager {
         }
 
         try {
-            const json = await readFile(this.config.jsonPath, { encoding: FILE_ENCODING });
+            const json = await readFile(filePath, { encoding: FILE_ENCODING });
 
             UserManager.users = json ? JSON.parse(json) : [];
         } catch (error) {
