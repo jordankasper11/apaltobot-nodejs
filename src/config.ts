@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import dotenv from 'dotenv';
+import { readFileSync } from 'fs';
 
 dotenv.config();
 
 abstract class BaseConfig {
-    protected setNumber(propertyName: string, value?: number, defaultValue?: number, required = true): number | undefined {
+    protected getNumber(propertyName: string, value?: number, defaultValue?: number, required = true): number | undefined {
         value = value && value != null && !Number.isNaN(value) ? value : defaultValue;
 
         if (required && !value)
@@ -14,7 +15,7 @@ abstract class BaseConfig {
         return value;
     }
 
-    protected setString(propertyName: string, value?: string, defaultValue?: string, required = true): string | undefined {
+    protected getString(propertyName: string, value?: string, defaultValue?: string, required = true): string | undefined {
         value = value ?? defaultValue;
 
         if (required && !value)
@@ -34,7 +35,7 @@ class DefaultAviationConfig extends BaseConfig implements AviationConfig {
     constructor() {
         super();
 
-        this.airportsJsonPath = this.setString('airportsJsonPath', process.env.AVIATION_AIRPORTS_JSON_PATH)!;
+        this.airportsJsonPath = this.getString('AVIATION_AIRPORTS_JSON_PATH', process.env.AVIATION_AIRPORTS_JSON_PATH)!;
     }
 }
 
@@ -58,16 +59,34 @@ class DefaultDiscordConfig extends BaseConfig implements DiscordConfig {
     readonly publicKey: string;
     readonly token: string;
     readonly updateListingInterval: number;
-    readonly servers: Array<DiscordServerConfig>;
+    servers: Array<DiscordServerConfig> = [];
 
     constructor() {
         super();
 
-        this.applicationId = this.setString('applicationId', process.env.DISCORD_APPLICATION_ID)!;
-        this.publicKey = this.setString('publicKey', process.env.DISCORD_PUBLIC_KEY)!;
-        this.token = this.setString('token', process.env.DISCORD_TOKEN)!;
-        this.updateListingInterval = this.setNumber('updateListingInterval', parseInt(process.env.DISCORD_UPDATE_LISTING_INTERVAL!), 60000)!;
-        this.servers = []; // TODO: load from file, if empty pull from .env
+        this.applicationId = this.getString('DISCORD_APPLICATION_ID', process.env.DISCORD_APPLICATION_ID)!;
+        this.publicKey = this.getString('DISCORD_PUBLIC_KEY', process.env.DISCORD_PUBLIC_KEY)!;
+        this.token = this.getString('DISCORD_TOKEN', process.env.DISCORD_TOKEN)!;
+        this.updateListingInterval = this.getNumber('DISCORD_UPDATE_LISTING_INTERVAL', parseInt(process.env.DISCORD_UPDATE_LISTING_INTERVAL!), 60000)!;
+        
+        this.loadServers();
+    }
+
+    private loadServers(): void {
+        const jsonPath = this.getString('DISCORD_SERVERS_JSON_PATH', process.env.DISCORD_SERVERS_JSON_PATH)!;
+
+         try {
+            const json = readFileSync(jsonPath, { encoding: 'utf-8' });
+            const servers: Array<DiscordServerConfig> = JSON.parse(json);
+
+            this.servers = servers;
+
+            console.info('Loaded Discord server data');
+        } catch (error) {
+            console.error('Error loading Discord server data', error);
+
+            throw error;
+        }
     }
 }
 
@@ -83,8 +102,8 @@ class DefaultUsersConfig extends BaseConfig implements UsersConfig {
     constructor() {
         super();
 
-        this.jsonPath = this.setString('jsonPath', process.env.USERS_JSON_PATH)!;
-        this.saveInterval = this.setNumber('saveInterval', parseInt(process.env.USERS_SAVE_INTERVAL!), 15000)!;
+        this.jsonPath = this.getString('jsonPath', process.env.USERS_JSON_PATH)!;
+        this.saveInterval = this.getNumber('saveInterval', parseInt(process.env.USERS_SAVE_INTERVAL!), 15000)!;
     }
 }
 
@@ -100,8 +119,8 @@ class DefaultVatsimConfig extends BaseConfig implements VatsimConfig {
     constructor() {
         super();
 
-        this.dataUrl = this.setString('dataUrl', process.env.VATSIM_DATA_URL, 'https://data.vatsim.net/v3/vatsim-data.json')!;
-        this.dataRefreshInterval = this.setNumber('dataRefreshInterval', parseInt(process.env.VATSIM_DATA_REFRESH_INTERVAL!), 120000)!;
+        this.dataUrl = this.getString('dataUrl', process.env.VATSIM_DATA_URL, 'https://data.vatsim.net/v3/vatsim-data.json')!;
+        this.dataRefreshInterval = this.getNumber('dataRefreshInterval', parseInt(process.env.VATSIM_DATA_REFRESH_INTERVAL!), 120000)!;
     }
 }
 
