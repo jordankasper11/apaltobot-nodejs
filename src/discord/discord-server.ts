@@ -38,30 +38,20 @@ export class DiscordServer {
     }
 
     async start(client: Client, updateListingInterval: number): Promise<void> {
-        await this.scheduleUpdates(client, updateListingInterval);
         await this.registerCommands(client);
+        await this.scheduleUpdates(client, updateListingInterval);
+
+        client.on('interactionCreate', (interaction) => {
+            if (interaction.guildId != this.config.guildId || !interaction.isCommand())
+                return;
+
+            return this.handleCommand(interaction);
+        });
     }
 
-    private async scheduleUpdates(client: Client, updateListingInterval: number): Promise<void> {
+    async stop(): Promise<void> {
         if (this.updateListingTimer)
             clearInterval(this.updateListingTimer);
-
-        const channel = client.channels.cache.get(this.config.channelId);
-
-        if (!channel)
-            throw new Error(`Channel ${this.config.channelId} not found`);
-
-        if (channel.deleted)
-            throw new Error(`Channel ${this.config.channelId} is deleted`);
-
-        if (!(isTextChannel(channel)))
-            throw new Error(`Channel ${this.config.channelId} is not a text channel`);
-
-        await this.updateListing(channel);
-
-        this.updateListingTimer = setInterval(async () => await this.updateListing(channel), updateListingInterval);
-
-        console.info(`Scheduled updates for ${this.config.name}`);
     }
 
     private async registerCommands(client: Client): Promise<void> {
@@ -127,7 +117,7 @@ export class DiscordServer {
         }
     }
 
-    private onCommand(interaction: CommandInteraction): Promise<void> {
+    private handleCommand(interaction: CommandInteraction): Promise<void> {
         switch (interaction.commandName) {
             case Command.AddVatsim:
                 return this.onAddVatsimCommand(interaction);
@@ -214,6 +204,28 @@ export class DiscordServer {
             content: 'Your VATSIM activity will be removed within a few minutes.',
             ephemeral: true
         });
+    }
+
+    private async scheduleUpdates(client: Client, updateListingInterval: number): Promise<void> {
+        if (this.updateListingTimer)
+            clearInterval(this.updateListingTimer);
+
+        const channel = client.channels.cache.get(this.config.channelId);
+
+        if (!channel)
+            throw new Error(`Channel ${this.config.channelId} not found`);
+
+        if (channel.deleted)
+            throw new Error(`Channel ${this.config.channelId} is deleted`);
+
+        if (!(isTextChannel(channel)))
+            throw new Error(`Channel ${this.config.channelId} is not a text channel`);
+
+        await this.updateListing(channel);
+
+        this.updateListingTimer = setInterval(async () => await this.updateListing(channel), updateListingInterval);
+
+        console.info(`Scheduled updates for ${this.config.name}`);
     }
 
     private async updateListing(channel: TextChannel): Promise<void> {
