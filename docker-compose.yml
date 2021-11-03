@@ -11,4 +11,4 @@ services:
       - .env
     environment:
       - AVIATION_AIRPORTS_JSON_PATH=/data/airports.json
-      - USERS_JSON_PATH=/data/users.json
+      - USERS_JSON_PATH=/data/users

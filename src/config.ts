@@ -36,33 +36,34 @@ export class AviationConfig extends BaseConfig {
     }
 }
 
-export class DiscordConfig extends BaseConfig {
-    readonly adminRoleId: string;
-    readonly applicationId: string;
-    readonly channelId: string;
+export interface DiscordServerConfig {
+    readonly name: string;
     readonly guildId: string;
+    readonly channelId: string;
+    readonly adminRoleId: string;
+}
+
+export class DiscordConfig extends BaseConfig {
+    readonly applicationId: string;
     readonly publicKey: string;
     readonly token: string;
     readonly updateListingInterval: number;
+    readonly servers: Array<DiscordServerConfig>;
 
     constructor(data?: {
-        adminRoleId?: string,
         applicationId?: string,
-        channelId?: string,
-        guildId?: string,
         publicKey?: string,
         token?: string,
-        updateListingInterval?: number
+        updateListingInterval?: number,
+        servers?: Array<DiscordServerConfig>
     }) {
         super();
 
-        this.adminRoleId = this.setString('adminRoleId', data?.adminRoleId ?? process.env.DISCORD_ADMIN_ROLE_ID)!;
         this.applicationId = this.setString('applicationId', data?.applicationId ?? process.env.DISCORD_APPLICATION_ID)!;
-        this.channelId = this.setString('channelId', data?.channelId ?? process.env.DISCORD_CHANNEL_ID)!;
-        this.guildId = this.setString('guildId', data?.guildId ?? process.env.DISCORD_GUILD_ID)!;
         this.publicKey = this.setString('publicKey', data?.publicKey ?? process.env.DISCORD_PUBLIC_KEY)!;
         this.token = this.setString('token', data?.token ?? process.env.DISCORD_TOKEN)!;
         this.updateListingInterval = this.setNumber('updateListingInterval', data?.updateListingInterval ?? parseInt(process.env.DISCORD_UPDATE_LISTING_INTERVAL!), 60000)!;
+        this.servers = []; // TODO: load from file, if empty pull from .env
     }
 }
 
