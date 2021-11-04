@@ -11,5 +11,5 @@ services:
       - .env
     environment:
       - AVIATION_AIRPORTS_JSON_PATH=/data/airports.json
-      - DISCORD_SERVERS_JSON_PATH=/data/discord-servers.json
+      - DISCORD_GUILDS_JSON_PATH=/data/discord-guilds.json
       - USERS_JSON_PATH=/data/users

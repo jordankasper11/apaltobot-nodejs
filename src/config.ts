@@ -39,7 +39,7 @@ class DefaultAviationConfig extends BaseConfig implements AviationConfig {
     }
 }
 
-export interface DiscordServerConfig {
+export interface DiscordGuildConfig {
     readonly name: string;
     readonly guildId: string;
     readonly channelId: string;
@@ -53,7 +53,7 @@ export interface DiscordConfig {
     publicKey: string;
     token: string;
     updateListingInterval: number;
-    servers: Array<DiscordServerConfig>;
+    guilds: Array<DiscordGuildConfig>;
 }
 
 class DefaultDiscordConfig extends BaseConfig implements DiscordConfig {
@@ -61,7 +61,7 @@ class DefaultDiscordConfig extends BaseConfig implements DiscordConfig {
     readonly publicKey: string;
     readonly token: string;
     readonly updateListingInterval: number;
-    servers: Array<DiscordServerConfig> = [];
+    guilds: Array<DiscordGuildConfig> = [];
 
     constructor() {
         super();
@@ -71,17 +71,17 @@ class DefaultDiscordConfig extends BaseConfig implements DiscordConfig {
         this.token = this.getString('DISCORD_TOKEN', process.env.DISCORD_TOKEN)!;
         this.updateListingInterval = this.getNumber('DISCORD_UPDATE_LISTING_INTERVAL', parseInt(process.env.DISCORD_UPDATE_LISTING_INTERVAL!), 60000)!;
         
-        this.loadServers();
+        this.loadGuilds();
     }
 
-    private loadServers(): void {
-        const jsonPath = this.getString('DISCORD_SERVERS_JSON_PATH', process.env.DISCORD_SERVERS_JSON_PATH)!;
+    private loadGuilds(): void {
+        const jsonPath = this.getString('DISCORD_GUILDS_JSON_PATH', process.env.DISCORD_GUILDS_JSON_PATH)!;
 
          try {
             const json = readFileSync(jsonPath, { encoding: 'utf-8' });
-            const servers: Array<DiscordServerConfig> = JSON.parse(json);
+            const servers: Array<DiscordGuildConfig> = JSON.parse(json);
 
-            this.servers = servers;
+            this.guilds = servers;
 
             console.info('Loaded Discord server data');
         } catch (error) {

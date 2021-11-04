@@ -4,7 +4,7 @@ import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { getDistance } from 'geolib';
 import { DateTime } from 'luxon';
-import { DiscordServerConfig } from '../config';
+import { DiscordGuildConfig } from '../config';
 import { AviationUtility } from '../aviation/aviation-utility';
 import { VatsimClient } from '../vatsim/vatsim-client';
 import { User, UserManager, UserManagerFactory } from '../users/user-manager';
@@ -18,8 +18,8 @@ enum Command {
 
 const isTextChannel = (channel: Channel): channel is TextChannel => channel.isText();
 
-export class DiscordServer {
-    private readonly config: DiscordServerConfig;
+export class DiscordGuild {
+    private readonly config: DiscordGuildConfig;
     private readonly discordApplicationId: string;
     private readonly discordToken: string;
     private readonly userManager: UserManager;
@@ -28,7 +28,7 @@ export class DiscordServer {
     private updateListingTimer?: NodeJS.Timer;
     private listingMessage?: Message;
 
-    constructor(config: DiscordServerConfig, discordApplicationId: string, discordToken: string, userManagerFactory: UserManagerFactory, vatsimClient: VatsimClient, aviationUtility: AviationUtility) {
+    constructor(config: DiscordGuildConfig, discordApplicationId: string, discordToken: string, userManagerFactory: UserManagerFactory, vatsimClient: VatsimClient, aviationUtility: AviationUtility) {
         this.config = config;
         this.discordApplicationId = discordApplicationId;
         this.discordToken = discordToken;

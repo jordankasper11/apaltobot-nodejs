@@ -3,7 +3,7 @@ import { DiscordConfig } from '../config';
 import { AviationUtility } from '../aviation/aviation-utility';
 import { VatsimClient } from '../vatsim/vatsim-client';
 import { UserManagerFactory } from '../users/user-manager';
-import { DiscordServer } from './discord-server';
+import { DiscordGuild } from './discord-guild';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../inversify';
 
@@ -13,7 +13,7 @@ export class DiscordBot {
     private readonly aviationUtility: AviationUtility;
     private readonly userManagerFactory: UserManagerFactory;
     private readonly vatsimClient: VatsimClient;
-    private servers: Array<DiscordServer> = [];
+    private guilds: Array<DiscordGuild> = [];
     private client?: Client;
 
     constructor(
@@ -48,18 +48,18 @@ export class DiscordBot {
     async stop(): Promise<void> {
         console.info('Discord bot is stopping');
 
-        await Promise.all(this.servers.map(s => s.stop()));
+        await Promise.all(this.guilds.map(g => g.stop()));
 
-        this.servers = [];
+        this.guilds = [];
         this.client?.destroy();
     }
 
     private async onReady(client: Client): Promise<void> {
         console.info('Discord bot is now connected');
 
-        for (const serverConfig of this.config.servers) {
-            const server = new DiscordServer(
-                serverConfig,
+        for (const guildConfig of this.config.guilds) {
+            const guild = new DiscordGuild(
+                guildConfig,
                 this.config.applicationId,
                 this.config.token,
                 this.userManagerFactory,
@@ -67,9 +67,9 @@ export class DiscordBot {
                 this.aviationUtility
             );
 
-            await server.start(client, this.config.updateListingInterval);
+            await guild.start(client, this.config.updateListingInterval);
 
-            this.servers.push(server);
+            this.guilds.push(guild);
         }
     }
 }
