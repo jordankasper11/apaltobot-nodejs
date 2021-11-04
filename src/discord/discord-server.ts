@@ -73,29 +73,34 @@ export class DiscordServer {
     private async registerCommands(client: Client): Promise<void> {
         const commands = [
             new SlashCommandBuilder()
-                .setName(Command.AddVatsim)
-                .setDescription('Add a VATSIM user')
-                .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true))
-                .addStringOption(option => option.setName('username').setDescription('Username').setRequired(true))
-                .setDefaultPermission(false),
-            new SlashCommandBuilder()
                 .setName(Command.LinkVatsim)
                 .setDescription('Link your VATSIM account')
                 .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true)),
             new SlashCommandBuilder()
-                .setName(Command.RemoveVatsim)
-                .setDescription('Remove a VATSIM user')
-                .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true)),
-            new SlashCommandBuilder()
                 .setName(Command.UnlinkVatsim)
                 .setDescription('Unlink your VATSIM account')
-                .setDefaultPermission(false)
-        ].map(c => c.toJSON());
+        ];
+
+        if (this.config.adminRoleId) {
+            commands.push(
+                new SlashCommandBuilder()
+                    .setName(Command.AddVatsim)
+                    .setDescription('Add a VATSIM user')
+                    .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true))
+                    .addStringOption(option => option.setName('username').setDescription('Username').setRequired(true))
+                    .setDefaultPermission(false),
+                new SlashCommandBuilder()
+                    .setName(Command.RemoveVatsim)
+                    .setDescription('Remove a VATSIM user')
+                    .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true))
+                    .setDefaultPermission(false)
+            );
+        }
 
         const rest = new REST({ version: '9' }).setToken(this.discordToken);
 
         try {
-            await rest.put(Routes.applicationGuildCommands(this.discordApplicationId, this.config.guildId), { body: commands });
+            await rest.put(Routes.applicationGuildCommands(this.discordApplicationId, this.config.guildId), { body: commands.map(c => c.toJSON()) });
 
             console.info(`Registered Discord commands for ${this.config.name}`);
         } catch (error) {
@@ -104,10 +109,14 @@ export class DiscordServer {
             throw error;
         }
 
-        await this.setCommandPermissions(client);
+        if (this.config.adminRoleId)
+            await this.setAdminCommandPermissions(client);
     }
 
-    private async setCommandPermissions(client: Client): Promise<void> {
+    private async setAdminCommandPermissions(client: Client): Promise<void> {
+        if (!this.config.adminRoleId)
+            return;
+
         try {
             const commands = await client.guilds.cache.get(this.config.guildId)?.commands.fetch();
             const adminCommandNames = [Command.AddVatsim.toString(), Command.RemoveVatsim.toString()];
