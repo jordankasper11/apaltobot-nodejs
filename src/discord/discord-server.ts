@@ -32,7 +32,7 @@ export class DiscordServer {
         this.config = config;
         this.discordApplicationId = discordApplicationId;
         this.discordToken = discordToken;
-        this.userManager = userManagerFactory.createUserManager(`${config.name}.json`);
+        this.userManager = userManagerFactory.createUserManager(config.name);
         this.vatsimClient = vatsimClient;
         this.aviationUtility = aviationUtility;
     }

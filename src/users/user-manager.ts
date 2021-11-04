@@ -26,22 +26,22 @@ export class UserManagerFactory {
         this.config = config;
     }
 
-    createUserManager(fileName: string): UserManager {
-        return new UserManager(this.config, fileName);
+    createUserManager(name: string): UserManager {
+        return new UserManager(this.config, name);
     }
 }
 
 export class UserManager {
     private readonly config: UsersConfig;
-    private readonly fileName: string;
+    private readonly name: string;
 
     private static users: Array<User>;
     private static updated = false;
     private static saveTimer: NodeJS.Timer;
 
-    constructor(config: UsersConfig, fileName: string) {
+    constructor(config: UsersConfig, name: string) {
         this.config = config;
-        this.fileName = fileName;
+        this.name = name;
 
         if (!UserManager.saveTimer)
             UserManager.saveTimer = setInterval(this.saveUsers.bind(this), this.config.saveInterval);
@@ -51,12 +51,13 @@ export class UserManager {
         if (UserManager.users)
             return;
 
-        const filePath = join(this.config.jsonPath, this.fileName);
+        const fileName = `${this.name}.json`;
+        const filePath = join(this.config.jsonPath, fileName);
 
         try {
             await access(filePath, constants.F_OK)
         } catch {
-            console.warn('Discord users file does not exist');
+            console.warn(`Discord users file does not exist for ${this.name}`);
 
             UserManager.users = [];
         }
@@ -66,7 +67,7 @@ export class UserManager {
 
             UserManager.users = json ? JSON.parse(json) : [];
         } catch (error) {
-            console.error('Error loading Discord users', error);
+            console.error(`Error loading Discord users for ${this.name}`, error);
 
             throw error;
         }
@@ -100,9 +101,9 @@ export class UserManager {
 
             UserManager.updated = false;
 
-            console.info('Saved Discord users');
+            console.info(`Saved Discord users for ${this.name}`);
         } catch (error) {
-            console.error('Error saving Discord users', error);
+            console.error(`Error saving Discord users for ${this.name}`, error);
         }
     }
 
@@ -114,7 +115,7 @@ export class UserManager {
         UserManager.users.push(user);
         UserManager.updated = true;
 
-        console.info('Added Discord User', user);
+        console.info(`Added Discord User for ${this.name}`, user);
     }
 
     async deleteUser(filter: UserFilter, log = true): Promise<void> {
@@ -132,6 +133,6 @@ export class UserManager {
         UserManager.updated = true;
 
         if (log)
-            console.info('Deleted Discord user', user);
+            console.info(`Deleted Discord user for ${this.name}`, user);
     }
 }
