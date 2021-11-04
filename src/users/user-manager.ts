@@ -34,6 +34,7 @@ export class UserManagerFactory {
 export class UserManager {
     private readonly config: UsersConfig;
     private readonly name: string;
+    private readonly filePath: string;
 
     private static users: Array<User>;
     private static updated = false;
@@ -42,6 +43,7 @@ export class UserManager {
     constructor(config: UsersConfig, name: string) {
         this.config = config;
         this.name = name;
+        this.filePath = join(this.config.jsonPath, `${this.name}.json`);
 
         if (!UserManager.saveTimer)
             UserManager.saveTimer = setInterval(this.saveUsers.bind(this), this.config.saveInterval);
@@ -51,11 +53,8 @@ export class UserManager {
         if (UserManager.users)
             return;
 
-        const fileName = `${this.name}.json`;
-        const filePath = join(this.config.jsonPath, fileName);
-
         try {
-            await access(filePath, constants.F_OK)
+            await access(this.filePath, constants.F_OK)
         } catch {
             console.warn(`Discord users file does not exist for ${this.name}`);
 
@@ -63,7 +62,7 @@ export class UserManager {
         }
 
         try {
-            const json = await readFile(filePath, { encoding: FILE_ENCODING });
+            const json = await readFile(this.filePath, { encoding: FILE_ENCODING });
 
             UserManager.users = json ? JSON.parse(json) : [];
         } catch (error) {
@@ -97,7 +96,7 @@ export class UserManager {
         const json = JSON.stringify(UserManager.users, null, 4);
 
         try {
-            await writeFile(this.config.jsonPath, json, { encoding: FILE_ENCODING });
+            await writeFile(this.filePath, json, { encoding: FILE_ENCODING });
 
             UserManager.updated = false;
 
@@ -111,7 +110,6 @@ export class UserManager {
         await this.loadUsers();
         await this.deleteUser({ discordId: user.discordId, vatsimId: user.vatsimId }, false);
 
-        UserManager.users = UserManager.users.filter(u => u.discordId != user.discordId);
         UserManager.users.push(user);
         UserManager.updated = true;
 
