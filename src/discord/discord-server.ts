@@ -38,17 +38,28 @@ export class DiscordServer {
     }
 
     async start(client: Client, updateListingInterval: number): Promise<void> {
-        console.info(`Discord bot monitoring ${this.config.name}`);
+        try {
+            const guild = client.guilds.cache.get(this.config.guildId);
 
-        await this.registerCommands(client);
-        await this.scheduleUpdates(client, updateListingInterval);
+            if (!guild)
+                throw new Error(`Guild ${this.config.guildId} not found`);
+            else if (guild.deleted)
+                throw new Error(`Guild ${this.config.guildId} is deleted`);
 
-        client.on('interactionCreate', (interaction) => {
-            if (interaction.guildId != this.config.guildId || !interaction.isCommand())
-                return;
+            await this.registerCommands(client);
+            await this.scheduleUpdates(client, updateListingInterval);
 
-            return this.handleCommand(interaction);
-        });
+            client.on('interactionCreate', (interaction) => {
+                if (interaction.guildId != this.config.guildId || !interaction.isCommand())
+                    return;
+
+                return this.handleCommand(interaction);
+            });
+
+            console.info(`Started Discord bot for ${this.config.name}`);
+        } catch (error) {
+            console.error(`Error starting Discord bot for ${this.config.name}`, error);
+        }
     }
 
     async stop(): Promise<void> {
@@ -216,11 +227,9 @@ export class DiscordServer {
 
         if (!channel)
             throw new Error(`Channel ${this.config.channelId} not found`);
-
-        if (channel.deleted)
+        else if (channel.deleted)
             throw new Error(`Channel ${this.config.channelId} is deleted`);
-
-        if (!(isTextChannel(channel)))
+        else if (!(isTextChannel(channel)))
             throw new Error(`Channel ${this.config.channelId} is not a text channel`);
 
         await this.updateListing(channel);
