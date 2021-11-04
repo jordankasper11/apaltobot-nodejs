@@ -39,6 +39,9 @@ export class DiscordServer {
 
     async start(client: Client, updateListingInterval: number): Promise<void> {
         try {
+            if (!this.config.displayFlights && !this.config.displayControllers)
+                throw new Error('Server is not configured to display flights or controllers');
+
             const guild = client.guilds.cache.get(this.config.guildId);
 
             if (!guild)
@@ -312,120 +315,126 @@ export class DiscordServer {
             return column.paddingDirection == 'left' ? value.padStart(column.width + column.padding) : value.padEnd(column.width + column.padding);
         };
 
-        const pilotUsers = discordUsers.map(u => ({
-            user: u,
-            guildMember: guildMembers.find(m => m.id == u.discordId),
-            pilot: vatsimData.pilots?.find(p => p.id == u.vatsimId)
-        }))
-            .filter(u => !!u.pilot)
-            .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
-
         const columnSeparator = 3;
         let content = '';
 
-        content += '**Flights**\n';
-        content += '```';
+        if (this.config.displayFlights) {
+            const pilotUsers = discordUsers.map(u => ({
+                user: u,
+                guildMember: guildMembers.find(m => m.id == u.discordId),
+                pilot: vatsimData.pilots?.find(p => p.id == u.vatsimId)
+            }))
+                .filter(u => !!u.pilot)
+                .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
 
-        if (pilotUsers.length) {
-            const progressIntervals = 20;
-            const usernameColumn = getColumn(' User', getMaxLength(pilotUsers.map(u => getUsername(u.user, u.guildMember))) + 1, columnSeparator);
-            const callsignColumn = getColumn('ID', getMaxLength(pilotUsers.map(u => u.pilot?.callsign)), columnSeparator);
-            const aircraftColumn = getColumn('A/C', getMaxLength(pilotUsers.map(u => u.pilot?.flightPlan?.aircraftShort)), columnSeparator);
-            const departureColumn = getColumn('DEP', 4, 1 + progressIntervals + 1);
-            const arrivalColumn = getColumn('ARR', 4, 0, 'left');
+            content += '**Flights**\n';
+            content += '```';
 
-            let header = '';
+            if (pilotUsers.length) {
+                const progressIntervals = 20;
+                const usernameColumn = getColumn(' User', getMaxLength(pilotUsers.map(u => getUsername(u.user, u.guildMember))) + 1, columnSeparator);
+                const callsignColumn = getColumn('ID', getMaxLength(pilotUsers.map(u => u.pilot?.callsign)), columnSeparator);
+                const aircraftColumn = getColumn('A/C', getMaxLength(pilotUsers.map(u => u.pilot?.flightPlan?.aircraftShort)), columnSeparator);
+                const departureColumn = getColumn('DEP', 4, 1 + progressIntervals + 1);
+                const arrivalColumn = getColumn('ARR', 4, 0, 'left');
 
-            header += addValue(usernameColumn, usernameColumn.heading);
-            header += addValue(callsignColumn, callsignColumn.heading);
-            header += addValue(aircraftColumn, aircraftColumn.heading);
-            header += addValue(departureColumn, departureColumn.heading);
-            header += addValue(arrivalColumn, arrivalColumn.heading);
+                let header = '';
 
-            content += `${header}\n`;
-            content += `${''.padStart(header.length, '-')}\n`;
+                header += addValue(usernameColumn, usernameColumn.heading);
+                header += addValue(callsignColumn, callsignColumn.heading);
+                header += addValue(aircraftColumn, aircraftColumn.heading);
+                header += addValue(departureColumn, departureColumn.heading);
+                header += addValue(arrivalColumn, arrivalColumn.heading);
 
-            for (const pilotUser of pilotUsers) {
-                let row = '';
+                content += `${header}\n`;
+                content += `${''.padStart(header.length, '-')}\n`;
 
-                row += addValue(usernameColumn, (pilotUser.guildMember ? '*' : ' ') + getUsername(pilotUser.user, pilotUser.guildMember));
-                row += addValue(callsignColumn, pilotUser.pilot?.callsign);
-                row += addValue(aircraftColumn, pilotUser.pilot?.flightPlan?.aircraftShort);
+                for (const pilotUser of pilotUsers) {
+                    let row = '';
 
-                if (pilotUser.pilot?.flightPlan?.departureAirport) {
-                    const [departureAirport, arrivalAirport] = await Promise.all([
-                        this.aviationUtility.getAirport(pilotUser.pilot.flightPlan.departureAirport),
-                        this.aviationUtility.getAirport(pilotUser.pilot.flightPlan.arrivalAirport)
-                    ]);
+                    row += addValue(usernameColumn, (pilotUser.guildMember ? '*' : ' ') + getUsername(pilotUser.user, pilotUser.guildMember));
+                    row += addValue(callsignColumn, pilotUser.pilot?.callsign);
+                    row += addValue(aircraftColumn, pilotUser.pilot?.flightPlan?.aircraftShort);
 
-                    let departure = '';
+                    if (pilotUser.pilot?.flightPlan?.departureAirport) {
+                        const [departureAirport, arrivalAirport] = await Promise.all([
+                            this.aviationUtility.getAirport(pilotUser.pilot.flightPlan.departureAirport),
+                            this.aviationUtility.getAirport(pilotUser.pilot.flightPlan.arrivalAirport)
+                        ]);
 
-                    departure += pilotUser.pilot.flightPlan.departureAirport.padEnd(5);
+                        let departure = '';
 
-                    if (departureAirport && arrivalAirport) {
-                        const remainingDistance = getDistance({ latitude: pilotUser.pilot.latitude, longitude: pilotUser.pilot.longitude }, { latitude: arrivalAirport.latitude, longitude: arrivalAirport.longitude }) / 1000;
-                        const totalDistance = getDistance({ latitude: departureAirport.latitude, longitude: departureAirport.longitude }, { latitude: arrivalAirport.latitude, longitude: arrivalAirport.longitude }) / 1000;
-                        const percentComplete = 100 * Math.abs(totalDistance - remainingDistance) / totalDistance;
+                        departure += pilotUser.pilot.flightPlan.departureAirport.padEnd(5);
 
-                        for (let i = 0; i < progressIntervals; i++) {
-                            const floor = 100 * i / progressIntervals;
+                        if (departureAirport && arrivalAirport) {
+                            const remainingDistance = getDistance({ latitude: pilotUser.pilot.latitude, longitude: pilotUser.pilot.longitude }, { latitude: arrivalAirport.latitude, longitude: arrivalAirport.longitude }) / 1000;
+                            const totalDistance = getDistance({ latitude: departureAirport.latitude, longitude: departureAirport.longitude }, { latitude: arrivalAirport.latitude, longitude: arrivalAirport.longitude }) / 1000;
+                            const percentComplete = 100 * Math.abs(totalDistance - remainingDistance) / totalDistance;
 
-                            departure += percentComplete > 0.5 && percentComplete >= floor || percentComplete >= 99.5 ? '+' : '-';
+                            for (let i = 0; i < progressIntervals; i++) {
+                                const floor = 100 * i / progressIntervals;
+
+                                departure += percentComplete > 0.5 && percentComplete >= floor || percentComplete >= 99.5 ? '+' : '-';
+                            }
                         }
+
+                        row += addValue(departureColumn, departure);
+                        row += addValue(arrivalColumn, pilotUser.pilot.flightPlan?.arrivalAirport);
                     }
+                    else
+                        row += addValue(departureColumn, 'No flightplan filed');
 
-                    row += addValue(departureColumn, departure);
-                    row += addValue(arrivalColumn, pilotUser.pilot.flightPlan?.arrivalAirport);
+                    content += `${row}\n`;
                 }
-                else
-                    row += addValue(departureColumn, 'No flightplan filed');
-
-                content += `${row}\n`;
             }
+            else
+                content += 'No pilots are currently online.\n';
+
+            content += '```\n';
         }
-        else
-            content += 'No pilots are currently online.\n';
 
-        content += '```\n';
-        content += '**Air Traffic Control**\n';
-        content += '```';
+        if (this.config.displayControllers) {
+            content += '**Air Traffic Control**\n';
+            content += '```';
 
-        const controllerUsers = discordUsers.map(u => ({
-            user: u,
-            guildMember: guildMembers.find(m => m.id == u.discordId),
-            controller: vatsimData.controllers?.find(c => c.id == u.vatsimId && c.callsign.includes('_') && !c.callsign.toLowerCase().endsWith('_atis'))
-        }))
-            .filter(u => !!u.controller)
-            .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
+            const controllerUsers = discordUsers.map(u => ({
+                user: u,
+                guildMember: guildMembers.find(m => m.id == u.discordId),
+                controller: vatsimData.controllers?.find(c => c.id == u.vatsimId && c.callsign.includes('_') && !c.callsign.toLowerCase().endsWith('_atis'))
+            }))
+                .filter(u => !!u.controller)
+                .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
 
-        if (controllerUsers.length) {
-            const usernameColumn = getColumn(' User', getMaxLength(controllerUsers.map(u => getUsername(u.user, u.guildMember))) + 1, columnSeparator);
-            const callsignColumn = getColumn('ID', getMaxLength(controllerUsers.map(u => u.controller?.callsign)), columnSeparator);
-            const onlineColumn = getColumn('Online', 6, 0);
+            if (controllerUsers.length) {
+                const usernameColumn = getColumn(' User', getMaxLength(controllerUsers.map(u => getUsername(u.user, u.guildMember))) + 1, columnSeparator);
+                const callsignColumn = getColumn('ID', getMaxLength(controllerUsers.map(u => u.controller?.callsign)), columnSeparator);
+                const onlineColumn = getColumn('Online', 6, 0);
 
-            let header = '';
+                let header = '';
 
-            header += addValue(usernameColumn, usernameColumn.heading);
-            header += addValue(callsignColumn, callsignColumn.heading);
-            header += addValue(onlineColumn, onlineColumn.heading);
+                header += addValue(usernameColumn, usernameColumn.heading);
+                header += addValue(callsignColumn, callsignColumn.heading);
+                header += addValue(onlineColumn, onlineColumn.heading);
 
-            content += `${header}\n`;
-            content += `${''.padStart(header.length, '-')}\n`;
+                content += `${header}\n`;
+                content += `${''.padStart(header.length, '-')}\n`;
 
-            for (const controllerUser of controllerUsers) {
-                let row = '';
+                for (const controllerUser of controllerUsers) {
+                    let row = '';
 
-                row += addValue(usernameColumn, (controllerUser.guildMember ? '*' : ' ') + getUsername(controllerUser.user, controllerUser.guildMember));
-                row += addValue(callsignColumn, controllerUser.controller?.callsign);
-                row += addValue(onlineColumn, controllerUser?.controller?.onlineSince ? DateTime.utc().diff(DateTime.fromJSDate(controllerUser.controller?.onlineSince)).toFormat('hh:mm') : '');
+                    row += addValue(usernameColumn, (controllerUser.guildMember ? '*' : ' ') + getUsername(controllerUser.user, controllerUser.guildMember));
+                    row += addValue(callsignColumn, controllerUser.controller?.callsign);
+                    row += addValue(onlineColumn, controllerUser?.controller?.onlineSince ? DateTime.utc().diff(DateTime.fromJSDate(controllerUser.controller?.onlineSince)).toFormat('hh:mm') : '');
 
-                content += `${row}\n`;
+                    content += `${row}\n`;
+                }
             }
-        }
-        else
-            content += 'No controllers are currently online.\n';
+            else
+                content += 'No controllers are currently online.\n';
 
-        content += '```\n';
+            content += '```\n';
+        }
+
         content += `_VATSIM data last updated on ${DateTime.fromJSDate(vatsimData.overview.lastUpdated).toFormat('yyyy-MM-dd HHmm')}Z_`;
 
         return content;
