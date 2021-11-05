@@ -258,7 +258,7 @@ export class DiscordGuild {
             if (this.listingMessageId) {
                 try {
                     message = await channel.messages.fetch(this.listingMessageId, { cache: false, force: true });
-                } catch (error) {
+                } catch {
                     this.listingMessageId = undefined;
 
                     console.info(`The previous VATSIM listing message for ${this.config.name} no longer exists. A new message will be created.`)
