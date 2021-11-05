@@ -8,11 +8,11 @@ export function logGlobalError(message: string, ...args: Array<any>): void {
     console.error(message, ...args);
 }
 
-export function logInfo(category: string, message: string, ...args: Array<any>): void { 
+export function logInfo(category: string, message: string, ...args: Array<any>): void {
     console.info(`${category}: ${message}`, ...args);
 }
 
-export function logGlobalInfo(message: string, ...args: Array<any>): void { 
+export function logGlobalInfo(message: string, ...args: Array<any>): void {
     console.info(message, ...args);
 }
 

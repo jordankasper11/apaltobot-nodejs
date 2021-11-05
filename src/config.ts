@@ -71,14 +71,14 @@ class DefaultDiscordConfig extends BaseConfig implements DiscordConfig {
         this.publicKey = this.getString('DISCORD_PUBLIC_KEY', process.env.DISCORD_PUBLIC_KEY)!;
         this.token = this.getString('DISCORD_TOKEN', process.env.DISCORD_TOKEN)!;
         this.updateListingInterval = this.getNumber('DISCORD_UPDATE_LISTING_INTERVAL', parseInt(process.env.DISCORD_UPDATE_LISTING_INTERVAL!), 60000)!;
-        
+
         this.loadGuilds();
     }
 
     private loadGuilds(): void {
         const jsonPath = this.getString('DISCORD_GUILDS_JSON_PATH', process.env.DISCORD_GUILDS_JSON_PATH)!;
 
-         try {
+        try {
             const json = readFileSync(jsonPath, { encoding: 'utf-8' });
             const servers: Array<DiscordGuildConfig> = JSON.parse(json);
 

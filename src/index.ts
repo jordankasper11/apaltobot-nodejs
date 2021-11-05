@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { Container } from 'inversify';
 import { AviationUtility } from './aviation/aviation-utility';
 import { AviationConfig, DiscordConfig, UsersConfig, VatsimConfig, defaultConfig } from './config';
-import { DiscordBot } from './discord/discord-bot'
+import { DiscordBot } from './discord/discord-bot';
 import { TYPES } from './inversify';
 import { UserManagerFactory } from './users/user-manager';
 import { VatsimClient } from './vatsim/vatsim-client';

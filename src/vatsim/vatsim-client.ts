@@ -18,7 +18,7 @@ export class VatsimClient {
     async getData(): Promise<VatsimData | undefined> {
         if (!this.data) {
             this.scheduleUpdates();
-            
+
             await this.updateData();
         }
 

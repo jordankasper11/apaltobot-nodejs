@@ -17,12 +17,7 @@ export class DiscordBot {
     private guilds: Array<DiscordGuild> = [];
     private client?: Client;
 
-    constructor(
-        @inject(TYPES.DiscordConfig) config: DiscordConfig,
-        aviationUtility: AviationUtility,
-        userManagerFactory: UserManagerFactory,
-        vatsimClient: VatsimClient
-    ) {
+    constructor(@inject(TYPES.DiscordConfig) config: DiscordConfig, aviationUtility: AviationUtility, userManagerFactory: UserManagerFactory, vatsimClient: VatsimClient) {
         this.config = config;
         this.aviationUtility = aviationUtility;
         this.userManagerFactory = userManagerFactory;

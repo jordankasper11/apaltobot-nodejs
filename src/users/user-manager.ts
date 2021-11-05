@@ -53,7 +53,7 @@ export class UserManager {
             return;
 
         try {
-            await access(this.filePath, constants.F_OK)
+            await access(this.filePath, constants.F_OK);
         } catch {
             logWarning(this.name, 'Discord users file does not exist');
 

@@ -244,7 +244,7 @@ export class DiscordGuild {
             throw new Error(`Channel ${this.config.channelId} not found`);
         else if (channel.deleted)
             throw new Error(`Channel ${this.config.channelId} is deleted`);
-        else if (!(isTextChannel(channel)))
+        else if (!isTextChannel(channel))
             throw new Error(`Channel ${this.config.channelId} is not a text channel`);
 
         await this.updateListing(channel);
@@ -291,7 +291,7 @@ export class DiscordGuild {
             }
 
             if (message)
-                message = await message.edit(content)
+                message = await message.edit(content);
             else
                 message = await channel.send(content);
 
