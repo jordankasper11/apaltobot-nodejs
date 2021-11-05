@@ -26,7 +26,7 @@ export class DiscordGuild {
     private readonly vatsimClient: VatsimClient;
     private readonly aviationUtility: AviationUtility;
     private updateListingTimer?: NodeJS.Timer;
-    private listingMessage?: Message;
+    private listingMessageId?: string;
 
     constructor(config: DiscordGuildConfig, discordApplicationId: string, discordToken: string, userManagerFactory: UserManagerFactory, vatsimClient: VatsimClient, aviationUtility: AviationUtility) {
         this.config = config;
@@ -253,12 +253,24 @@ export class DiscordGuild {
 
     private async updateListing(channel: TextChannel): Promise<void> {
         try {
-            let message = this.listingMessage;
+            let message: Message | undefined;
 
-            if (message && DateTime.fromJSDate(message.createdAt).diffNow('days').days < -13) {
-                message = undefined;
+            if (this.listingMessageId) {
+                try {
+                    message = await channel.messages.fetch(this.listingMessageId, { cache: false, force: true });
+                } catch (error) {
+                    this.listingMessageId = undefined;
 
-                console.info('VATSIM listing message is too old to modify so replacing it with a new one');
+                    console.info(`The previous VATSIM listing message for ${this.config.name} no longer exists. A new message will be created.`)
+                }
+
+                if (message && (!message.editable || DateTime.fromJSDate(message.createdAt).diffNow('days').days < -13)) {
+                    this.listingMessageId = undefined;
+
+                    message = undefined;
+
+                    console.info(`The VATSIM listing message for ${this.config.name} is no longer editable. It will be replaced by a new message.`);
+                }
             }
 
             const content = await this.getListingContent(channel.guild);
@@ -268,12 +280,19 @@ export class DiscordGuild {
 
             const messages = await channel.messages.fetch({ limit: 100 });
 
-            await channel.bulkDelete(messages.filter(m => m.id != message?.id));
+            if (messages.size) {
+                const messagesToDelete = messages?.filter(m => m.id != message?.id);
+
+                if (messagesToDelete?.size)
+                    await channel.bulkDelete(messagesToDelete);
+            }
 
             if (message)
-                this.listingMessage = await message.edit(content)
+                message = await message.edit(content)
             else
-                this.listingMessage = await channel.send(content);
+                message = await channel.send(content);
+
+            this.listingMessageId = message.id;
 
             console.info('Updated VATSIM listing');
         } catch (error) {
