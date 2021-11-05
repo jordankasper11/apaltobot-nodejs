@@ -1,14 +1,14 @@
 import 'reflect-metadata';
 import { Container } from 'inversify';
 import { AviationUtility } from './aviation/aviation-utility';
-import { AviationConfig, defaultConfig, DiscordConfig, UsersConfig, VatsimConfig } from './config';
+import { AviationConfig, DiscordConfig, UsersConfig, VatsimConfig, defaultConfig } from './config';
 import { DiscordBot } from './discord/discord-bot'
 import { TYPES } from './inversify';
 import { UserManagerFactory } from './users/user-manager';
 import { VatsimClient } from './vatsim/vatsim-client';
 import { logGlobalInfo } from './logging';
 
-logGlobalInfo("Application starting", defaultConfig);
+logGlobalInfo('Application starting', defaultConfig);
 
 const container = new Container();
 

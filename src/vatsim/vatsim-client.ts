@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 import { VatsimConfig } from '../config';
 import { TYPES } from '../inversify';
 import { logGlobalError, logGlobalInfo } from '../logging';
-import { RawVatsimData, VatsimData } from "./vatsim-data";
+import { RawVatsimData, VatsimData } from './vatsim-data';
 
 @injectable()
 export class VatsimClient {

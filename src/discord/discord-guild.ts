@@ -11,13 +11,15 @@ import { User, UserManager, UserManagerFactory } from '../users/user-manager';
 import { logError, logInfo } from '../logging';
 
 enum Command {
-    AddVatsim = "addvatsim",
+    AddVatsim = 'addvatsim',
     LinkVatsim = 'linkvatsim',
-    RemoveVatsim = "removevatsim",
+    RemoveVatsim = 'removevatsim',
     UnlinkVatsim = 'unlinkvatsim'
 }
 
-const isTextChannel = (channel: Channel): channel is TextChannel => channel.isText();
+function isTextChannel(channel: Channel): channel is TextChannel {
+    return channel.isText();
+}
 
 export class DiscordGuild {
     private readonly config: DiscordGuildConfig;
@@ -53,11 +55,11 @@ export class DiscordGuild {
             await this.registerCommands(client);
             await this.scheduleUpdates(client, updateListingInterval);
 
-            client.on('interactionCreate', (interaction) => {
+            client.on('interactionCreate', async (interaction) => {
                 if (interaction.guildId != this.config.guildId || !interaction.isCommand())
                     return;
 
-                return this.handleCommand(interaction);
+                await this.handleCommand(interaction);
             });
 
             logInfo(this.config.name, 'Started Discord bot');
@@ -66,7 +68,7 @@ export class DiscordGuild {
         }
     }
 
-    async stop(): Promise<void> {
+    stop(): void {
         if (this.updateListingTimer)
             clearInterval(this.updateListingTimer);
     }
@@ -308,17 +310,17 @@ export class DiscordGuild {
             this.vatsimClient.getData()
         ]);
 
-        const getUsername = (user: User, guildMember?: GuildMember): string => {
+        function getUsername(user: User, guildMember?: GuildMember): string {
             return guildMember?.nickname ?? guildMember?.user?.username ?? user.username ?? '';
         }
 
-        const getMaxLength = (values: Array<string | undefined>): number => {
+        function getMaxLength(values: Array<string | undefined>): number {
             return values.reduce((maxLength, value) => {
                 const length = value?.length ?? 0;
 
                 return length > maxLength ? length : maxLength;
             }, 0);
-        };
+        }
 
         interface Column {
             heading: string,
@@ -327,7 +329,7 @@ export class DiscordGuild {
             paddingDirection: string
         }
 
-        const getColumn = (heading: string, maxLength: number, padding: number, paddingDirection: 'left' | 'right' = 'right'): Column => {
+        function getColumn(heading: string, maxLength: number, padding: number, paddingDirection: 'left' | 'right' = 'right'): Column {
             const width = heading.length > maxLength ? heading.length : maxLength;
 
             return {
@@ -336,13 +338,13 @@ export class DiscordGuild {
                 padding,
                 paddingDirection
             };
-        };
+        }
 
-        const addValue = (column: Column, value?: string): string => {
+        function addValue(column: Column, value?: string): string {
             value = value ?? '';
 
             return column.paddingDirection == 'left' ? value.padStart(column.width + column.padding) : value.padEnd(column.width + column.padding);
-        };
+        }
 
         const columnSeparator = 3;
         let content = '';
@@ -407,14 +409,12 @@ export class DiscordGuild {
 
                         row += addValue(departureColumn, departure);
                         row += addValue(arrivalColumn, pilotUser.pilot.flightPlan?.arrivalAirport);
-                    }
-                    else
+                    } else
                         row += addValue(departureColumn, 'No flightplan filed');
 
                     content += `${row}\n`;
                 }
-            }
-            else
+            } else
                 content += 'No pilots are currently online.\n';
 
             content += '```\n';
@@ -455,8 +455,7 @@ export class DiscordGuild {
 
                     content += `${row}\n`;
                 }
-            }
-            else
+            } else
                 content += 'No controllers are currently online.\n';
 
             content += '```\n';

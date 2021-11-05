@@ -8,7 +8,7 @@ dotenv.config();
 
 abstract class BaseConfig {
     protected getNumber(propertyName: string, value?: number, defaultValue?: number, required = true): number | undefined {
-        value = value && value != null && !Number.isNaN(value) ? value : defaultValue;
+        value = value && !Number.isNaN(value) ? value : defaultValue;
 
         if (required && !value)
             throw new Error(`${propertyName} is required`);

@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 import { AviationConfig } from '../config';
 import { TYPES } from '../inversify';
 import { logGlobalError, logGlobalInfo } from '../logging';
-import { Airport, RawAirportData } from "./airport";
+import { Airport, RawAirportData } from './airport';
 
 const FILE_ENCODING = 'utf-8';
 
