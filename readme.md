@@ -3,13 +3,16 @@
 
 ApaltoBot is a Discord bot that allows multiple Discord guilds to display a live listing of their members' VATSIM pilot and air traffic control activity.
 
+### Discord Application
+To join ApaltoBot to a Discord guild, go to the OAuth2 settings page for your Discord application, select the permissions specified below, and go to the generated URL to select a guild.
+
+*Note: Your Discord user account must have `Manage Server` permissions to add a bot to a guild.*
+
+![Screenshot of VATSIM listing](assets/images/screenshot-discord-oauth-permissions.png)
+
 ## Setup
 
 ApaltoBot can run natively or within a Docker container.
-
-### Preqrequisites
-
-DISCORD SETUP INSTRUCTIONS HERE
 
 ### Environment Variables
 The following environment variables are required, either in a `.env` file created in the root directory, in `docker-compose.yml`, or set natively within your system:
