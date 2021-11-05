@@ -1,15 +1,18 @@
 import axios from 'axios';
+import { inject, injectable } from 'inversify';
 import { VatsimConfig } from '../config';
+import { TYPES } from '../inversify';
 import { RawVatsimData, VatsimData } from "./vatsim-data";
 
+@injectable()
 export class VatsimClient {
     private readonly config: VatsimConfig;
 
     private static data: VatsimData;
     private static updateTimer: NodeJS.Timer;
 
-    constructor(config?: VatsimConfig) {
-        this.config = config ??  new VatsimConfig();
+    constructor(@inject(TYPES.VatsimConfig) config: VatsimConfig) {
+        this.config = config;
     }
 
     getData = async (): Promise<VatsimData> => {

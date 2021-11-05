@@ -1,6 +1,9 @@
 import { constants } from 'fs';
+import { join } from 'path';
 import { access, readFile, writeFile } from 'fs/promises';
+import { inject, injectable } from 'inversify';
 import { UsersConfig } from '../config';
+import { TYPES } from '../inversify';
 
 const FILE_ENCODING = 'utf-8';
 
@@ -15,15 +18,32 @@ export interface UserFilter {
     vatsimId?: number
 }
 
+@injectable()
+export class UserManagerFactory {
+    private readonly config: UsersConfig;
+
+    constructor(@inject(TYPES.UsersConfig) config: UsersConfig) {
+        this.config = config;
+    }
+
+    createUserManager(name: string): UserManager {
+        return new UserManager(this.config, name);
+    }
+}
+
 export class UserManager {
     private readonly config: UsersConfig;
+    private readonly name: string;
+    private readonly filePath: string;
 
     private static users: Array<User>;
     private static updated = false;
     private static saveTimer: NodeJS.Timer;
 
-    constructor(config?: UsersConfig) {
-        this.config = config ??  new UsersConfig();
+    constructor(config: UsersConfig, name: string) {
+        this.config = config;
+        this.name = name;
+        this.filePath = join(this.config.jsonPath, `${this.name}.json`);
 
         if (!UserManager.saveTimer)
             UserManager.saveTimer = setInterval(this.saveUsers.bind(this), this.config.saveInterval);
@@ -34,19 +54,19 @@ export class UserManager {
             return;
 
         try {
-            await access(this.config.jsonPath, constants.F_OK)
+            await access(this.filePath, constants.F_OK)
         } catch {
-            console.warn('Discord users file does not exist');
+            console.warn(`Discord users file does not exist for ${this.name}`);
 
             UserManager.users = [];
         }
 
         try {
-            const json = await readFile(this.config.jsonPath, { encoding: FILE_ENCODING });
+            const json = await readFile(this.filePath, { encoding: FILE_ENCODING });
 
             UserManager.users = json ? JSON.parse(json) : [];
         } catch (error) {
-            console.error('Error loading Discord users', error);
+            console.error(`Error loading Discord users for ${this.name}`, error);
 
             throw error;
         }
@@ -76,13 +96,13 @@ export class UserManager {
         const json = JSON.stringify(UserManager.users, null, 4);
 
         try {
-            await writeFile(this.config.jsonPath, json, { encoding: FILE_ENCODING });
+            await writeFile(this.filePath, json, { encoding: FILE_ENCODING });
 
             UserManager.updated = false;
 
-            console.info('Saved Discord users');
+            console.info(`Saved Discord users for ${this.name}`);
         } catch (error) {
-            console.error('Error saving Discord users', error);
+            console.error(`Error saving Discord users for ${this.name}`, error);
         }
     }
 
@@ -90,11 +110,10 @@ export class UserManager {
         await this.loadUsers();
         await this.deleteUser({ discordId: user.discordId, vatsimId: user.vatsimId }, false);
 
-        UserManager.users = UserManager.users.filter(u => u.discordId != user.discordId);
         UserManager.users.push(user);
         UserManager.updated = true;
 
-        console.info('Added Discord User', user);
+        console.info(`Added Discord User for ${this.name}`, user);
     }
 
     async deleteUser(filter: UserFilter, log = true): Promise<void> {
@@ -112,6 +131,6 @@ export class UserManager {
         UserManager.updated = true;
 
         if (log)
-            console.info('Deleted Discord user', user);
+            console.info(`Deleted Discord user for ${this.name}`, user);
     }
 }
