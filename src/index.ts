@@ -16,9 +16,9 @@ container.bind<AviationConfig>(TYPES.AviationConfig).toConstantValue(defaultConf
 container.bind<DiscordConfig>(TYPES.DiscordConfig).toConstantValue(defaultConfig.discord);
 container.bind<UsersConfig>(TYPES.UsersConfig).toConstantValue(defaultConfig.users);
 container.bind<VatsimConfig>(TYPES.VatsimConfig).toConstantValue(defaultConfig.vatsim);
-container.bind(AviationUtility).to(AviationUtility);
+container.bind(AviationUtility).to(AviationUtility).inSingletonScope();
 container.bind(UserManagerFactory).to(UserManagerFactory);
-container.bind(VatsimClient).to(VatsimClient);
+container.bind(VatsimClient).to(VatsimClient).inSingletonScope();
 container.bind(DiscordBot).to(DiscordBot);
 
 const discordBot = container.get(DiscordBot);

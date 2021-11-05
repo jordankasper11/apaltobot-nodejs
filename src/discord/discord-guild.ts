@@ -249,7 +249,7 @@ export class DiscordGuild {
 
         this.updateListingTimer = setInterval(async () => await this.updateListing(channel), updateListingInterval);
 
-        logInfo(this.config.name, 'Scheduled updates');
+        logInfo(this.config.name, 'Scheduled VATSIM listing updates');
     }
 
     private async updateListing(channel: TextChannel): Promise<void> {
@@ -351,7 +351,7 @@ export class DiscordGuild {
             const pilotUsers = discordUsers.map(u => ({
                 user: u,
                 guildMember: guildMembers.find(m => m.id == u.discordId),
-                pilot: vatsimData.pilots?.find(p => p.id == u.vatsimId)
+                pilot: vatsimData?.pilots?.find(p => p.id == u.vatsimId)
             }))
                 .filter(u => !!u.pilot)
                 .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
@@ -386,10 +386,8 @@ export class DiscordGuild {
                     row += addValue(aircraftColumn, pilotUser.pilot?.flightPlan?.aircraftShort);
 
                     if (pilotUser.pilot?.flightPlan?.departureAirport) {
-                        const [departureAirport, arrivalAirport] = await Promise.all([
-                            this.aviationUtility.getAirport(pilotUser.pilot.flightPlan.departureAirport),
-                            this.aviationUtility.getAirport(pilotUser.pilot.flightPlan.arrivalAirport)
-                        ]);
+                        const departureAirport = await this.aviationUtility.getAirport(pilotUser.pilot.flightPlan.departureAirport);
+                        const arrivalAirport = await this.aviationUtility.getAirport(pilotUser.pilot.flightPlan.arrivalAirport);
 
                         let departure = '';
 
@@ -429,7 +427,7 @@ export class DiscordGuild {
             const controllerUsers = discordUsers.map(u => ({
                 user: u,
                 guildMember: guildMembers.find(m => m.id == u.discordId),
-                controller: vatsimData.controllers?.find(c => c.id == u.vatsimId && c.callsign.includes('_') && !c.callsign.toLowerCase().endsWith('_atis'))
+                controller: vatsimData?.controllers?.find(c => c.id == u.vatsimId && c.callsign.includes('_') && !c.callsign.toLowerCase().endsWith('_atis'))
             }))
                 .filter(u => !!u.controller)
                 .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
@@ -464,7 +462,10 @@ export class DiscordGuild {
             content += '```\n';
         }
 
-        content += `_VATSIM data last updated on ${DateTime.fromJSDate(vatsimData.overview.lastUpdated).toFormat('yyyy-MM-dd HHmm')}Z_`;
+        if (vatsimData)
+            content += `_VATSIM data last updated on ${DateTime.fromJSDate(vatsimData.overview.lastUpdated).toFormat('yyyy-MM-dd HHmm')}Z_`;
+        else
+            content += `Unable to retriev_VATSIM data as of ${DateTime.now().toFormat('yyyy-MM-dd HHmm')}Z_`;
 
         return content;
     }

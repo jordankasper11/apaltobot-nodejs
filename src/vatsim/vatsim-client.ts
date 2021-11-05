@@ -8,39 +8,41 @@ import { RawVatsimData, VatsimData } from "./vatsim-data";
 @injectable()
 export class VatsimClient {
     private readonly config: VatsimConfig;
-
-    private static data: VatsimData;
-    private static updateTimer: NodeJS.Timer;
+    private data: VatsimData | undefined;
+    private updateTimer: NodeJS.Timer | undefined;
 
     constructor(@inject(TYPES.VatsimConfig) config: VatsimConfig) {
         this.config = config;
     }
 
-    getData = async (): Promise<VatsimData> => {
-        if (!VatsimClient.data)
+    async getData(): Promise<VatsimData | undefined> {
+        if (!this.data) {
+            this.scheduleUpdates();
+            
             await this.updateData();
+        }
 
-        return VatsimClient.data;
-    };
+        return this.data;
+    }
 
-    scheduleUpdate = async (): Promise<void> => {
-        if (VatsimClient.updateTimer)
+    scheduleUpdates(): void {
+        if (this.updateTimer)
             return;
 
-        await this.updateData();
+        this.updateTimer = setInterval(async () => await this.updateData(), this.config.dataRefreshInterval);
 
-        VatsimClient.updateTimer = setInterval(this.updateData, this.config.dataRefreshInterval);
-    };
+        logGlobalInfo('Scheduled updates of VATSIM data');
+    }
 
-    private updateData = async (): Promise<void> => {
+    private async updateData(): Promise<void> {
         try {
             const response = await axios.get<RawVatsimData>(this.config.dataUrl);
-            
-            VatsimClient.data = new VatsimData(response.data);
+
+            this.data = new VatsimData(response.data);
 
             logGlobalInfo('Retrieved VATSIM data');
         } catch (error) {
             logGlobalError('Error retrieving VATSIM data', error);
         }
-    };
+    }
 }
