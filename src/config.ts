@@ -2,6 +2,7 @@
 
 import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
+import { logGlobalError, logGlobalInfo } from './logging';
 
 dotenv.config();
 
@@ -83,9 +84,9 @@ class DefaultDiscordConfig extends BaseConfig implements DiscordConfig {
 
             this.guilds = servers;
 
-            console.info('Loaded Discord server data');
+            logGlobalInfo('Loaded Discord server data');
         } catch (error) {
-            console.error('Error loading Discord server data', error);
+            logGlobalError('Error loading Discord server data', error);
 
             throw error;
         }

@@ -8,6 +8,7 @@ import { DiscordGuildConfig } from '../config';
 import { AviationUtility } from '../aviation/aviation-utility';
 import { VatsimClient } from '../vatsim/vatsim-client';
 import { User, UserManager, UserManagerFactory } from '../users/user-manager';
+import { logError, logInfo } from '../logging';
 
 enum Command {
     AddVatsim = "addvatsim",
@@ -59,9 +60,9 @@ export class DiscordGuild {
                 return this.handleCommand(interaction);
             });
 
-            this.info('Started Discord bot');
+            logInfo(this.config.name, 'Started Discord bot');
         } catch (error) {
-            this.error('Error starting Discord bot', error);
+            logError(this.config.name, 'Error starting Discord bot', error);
         }
     }
 
@@ -102,9 +103,9 @@ export class DiscordGuild {
         try {
             await rest.put(Routes.applicationGuildCommands(this.discordApplicationId, this.config.guildId), { body: commands.map(c => c.toJSON()) });
 
-            this.info('Registered Discord commands');
+            logInfo(this.config.name, 'Registered Discord commands');
         } catch (error) {
-            this.error('Error registering Discord commands', error);
+            logError(this.config.name, 'Error registering Discord commands', error);
 
             throw error;
         }
@@ -134,9 +135,9 @@ export class DiscordGuild {
                 await command.permissions.set({ permissions });
             }
 
-            this.info('Set Discord command permissions');
+            logInfo(this.config.name, 'Set Discord command permissions');
         } catch (error) {
-            this.error('Error setting Discord command permissions', error);
+            logError(this.config.name, 'Error setting Discord command permissions', error);
 
             throw error;
         }
@@ -248,7 +249,7 @@ export class DiscordGuild {
 
         this.updateListingTimer = setInterval(async () => await this.updateListing(channel), updateListingInterval);
 
-        this.info('Scheduled updates');
+        logInfo(this.config.name, 'Scheduled updates');
     }
 
     private async updateListing(channel: TextChannel): Promise<void> {
@@ -261,7 +262,7 @@ export class DiscordGuild {
                 } catch {
                     this.listingMessageId = undefined;
 
-                    this.info('The previous VATSIM listing message no longer exists. A new message will be created.');
+                    logInfo(this.config.name, 'The previous VATSIM listing message no longer exists. A new message will be created.');
                 }
 
                 if (message && (!message.editable || DateTime.fromJSDate(message.createdAt).diffNow('days').days < -13)) {
@@ -269,7 +270,7 @@ export class DiscordGuild {
 
                     message = undefined;
 
-                    this.info('The VATSIM listing message is no longer editable. It will be replaced by a new message.');
+                    logInfo(this.config.name, 'The VATSIM listing message is no longer editable. It will be replaced by a new message.');
                 }
             }
 
@@ -294,9 +295,9 @@ export class DiscordGuild {
 
             this.listingMessageId = message.id;
 
-            this.info('Updated VATSIM listing');
+            logInfo(this.config.name, 'Updated VATSIM listing');
         } catch (error) {
-            this.error('Error updating VATSIM listing', error);
+            logError(this.config.name, 'Error updating VATSIM listing', error);
         }
     }
 
@@ -467,16 +468,4 @@ export class DiscordGuild {
 
         return content;
     }
-
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-
-    private info(message: string, ...args: Array<any>): void { 
-        console.info(`${this.config.name}: ${message}`, ...args);
-    }
-
-    private error(message: string, ...args: Array<any>): void {
-        console.error(`${this.config.name}: ${message}`, ...args);
-    }
-
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 }

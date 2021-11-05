@@ -2,6 +2,7 @@ import axios from 'axios';
 import { inject, injectable } from 'inversify';
 import { VatsimConfig } from '../config';
 import { TYPES } from '../inversify';
+import { logGlobalError, logGlobalInfo } from '../logging';
 import { RawVatsimData, VatsimData } from "./vatsim-data";
 
 @injectable()
@@ -37,9 +38,9 @@ export class VatsimClient {
             
             VatsimClient.data = new VatsimData(response.data);
 
-            console.info('Retrieved VATSIM data');
+            logGlobalInfo('Retrieved VATSIM data');
         } catch (error) {
-            console.error('Error retrieving VATSIM data', error);
+            logGlobalError('Error retrieving VATSIM data', error);
         }
     };
 }

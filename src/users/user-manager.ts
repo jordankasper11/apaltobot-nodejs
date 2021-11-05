@@ -4,6 +4,7 @@ import { access, readFile, writeFile } from 'fs/promises';
 import { inject, injectable } from 'inversify';
 import { UsersConfig } from '../config';
 import { TYPES } from '../inversify';
+import { logError, logInfo, logWarning } from '../logging';
 
 const FILE_ENCODING = 'utf-8';
 
@@ -54,7 +55,7 @@ export class UserManager {
         try {
             await access(this.filePath, constants.F_OK)
         } catch {
-            console.warn(`Discord users file does not exist for ${this.name}`);
+            logWarning(this.name, 'Discord users file does not exist');
 
             this.users = [];
             this.updated = true;
@@ -67,7 +68,7 @@ export class UserManager {
 
             this.users = json ? JSON.parse(json) : [];
         } catch (error) {
-            console.error(`Error loading Discord users for ${this.name}`, error);
+            logError(this.name, 'Error loading Discord users', error);
 
             throw error;
         }
@@ -104,9 +105,9 @@ export class UserManager {
 
             this.updated = false;
 
-            console.info(`Saved Discord users for ${this.name}`);
+            logInfo(this.name, 'Saved Discord users');
         } catch (error) {
-            console.error(`Error saving Discord users for ${this.name}`, error);
+            logError(this.name, 'Error saving Discord users', error);
         }
     }
 
@@ -117,7 +118,7 @@ export class UserManager {
         this.users?.push(user);
         this.updated = true;
 
-        console.info(`Added Discord User for ${this.name}`, user);
+        logInfo(this.name, 'Added Discord User', user);
     }
 
     async deleteUser(filter: UserFilter, log = true): Promise<void> {
@@ -137,6 +138,6 @@ export class UserManager {
         this.updated = true;
 
         if (log)
-            console.info(`Deleted Discord user for ${this.name}`, user);
+            logInfo(this.name, 'Deleted Discord user', user);
     }
 }

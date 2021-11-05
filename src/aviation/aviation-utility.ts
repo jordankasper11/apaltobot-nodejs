@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises';
 import { inject, injectable } from 'inversify';
 import { AviationConfig } from '../config';
 import { TYPES } from '../inversify';
+import { logGlobalError, logGlobalInfo } from '../logging';
 import { Airport, RawAirportData } from "./airport";
 
 const FILE_ENCODING = 'utf-8';
@@ -28,9 +29,9 @@ export class AviationUtility {
 
             AviationUtility.airports = Object.fromEntries(Object.keys(airports).map(a => [a, new Airport(airports[a])]));
 
-            console.info('Loaded airport data');
+            logGlobalInfo('Loaded airport data');
         } catch (error) {
-            console.error('Error loading airport data', error);
+            logGlobalError('Error loading airport data', error);
 
             throw error;
         }

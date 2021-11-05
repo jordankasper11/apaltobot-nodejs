@@ -6,6 +6,7 @@ import { UserManagerFactory } from '../users/user-manager';
 import { DiscordGuild } from './discord-guild';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../inversify';
+import { logGlobalInfo } from '../logging';
 
 @injectable()
 export class DiscordBot {
@@ -29,7 +30,7 @@ export class DiscordBot {
     }
 
     async start(): Promise<void> {
-        console.info('Discord bot is starting');
+        logGlobalInfo('Discord bot is starting');
 
         const client = new Client({
             intents: [
@@ -46,7 +47,7 @@ export class DiscordBot {
     }
 
     async stop(): Promise<void> {
-        console.info('Discord bot is stopping');
+        logGlobalInfo('Discord bot is stopping');
 
         await Promise.all(this.guilds.map(g => g.stop()));
 
@@ -55,7 +56,7 @@ export class DiscordBot {
     }
 
     private async onReady(client: Client): Promise<void> {
-        console.info('Discord bot is now connected');
+        logGlobalInfo('Discord bot is now connected');
 
         for (const guildConfig of this.config.guilds) {
             const guild = new DiscordGuild(

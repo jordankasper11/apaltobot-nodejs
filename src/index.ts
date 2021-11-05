@@ -6,8 +6,9 @@ import { DiscordBot } from './discord/discord-bot'
 import { TYPES } from './inversify';
 import { UserManagerFactory } from './users/user-manager';
 import { VatsimClient } from './vatsim/vatsim-client';
+import { logGlobalInfo } from './logging';
 
-console.info("Application starting", defaultConfig);
+logGlobalInfo("Application starting", defaultConfig);
 
 const container = new Container();
 
