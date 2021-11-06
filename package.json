@@ -12,11 +12,6 @@
         "serve": "node ./dist/index.js",
         "start": "npm run build && npm run serve"
     },
-    "nodemonConfig": {
-        "ignore": [
-            "data/*"
-        ]
-    },
     "dependencies": {
         "@discordjs/builders": "^0.8.0",
         "@discordjs/rest": "^0.1.0-canary.0",
