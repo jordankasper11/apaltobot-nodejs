@@ -14,7 +14,8 @@ enum Command {
     AddVatsim = 'addvatsim',
     LinkVatsim = 'linkvatsim',
     RemoveVatsim = 'removevatsim',
-    UnlinkVatsim = 'unlinkvatsim'
+    UnlinkVatsim = 'unlinkvatsim',
+    VatsimRegistration = 'vatsimregistration'
 }
 
 function isTextChannel(channel: Channel): channel is TextChannel {
@@ -96,6 +97,10 @@ export class DiscordGuild {
                     .setName(Command.RemoveVatsim)
                     .setDescription('Remove a VATSIM user')
                     .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true))
+                    .setDefaultPermission(false),
+                new SlashCommandBuilder()
+                    .setName(Command.VatsimRegistration)
+                    .setDescription('View VATSIM user registration data')
                     .setDefaultPermission(false)
             );
         }
@@ -122,7 +127,7 @@ export class DiscordGuild {
 
         try {
             const commands = await client.guilds.cache.get(this.config.guildId)?.commands.fetch();
-            const adminCommandNames = [Command.AddVatsim.toString(), Command.RemoveVatsim.toString()];
+            const adminCommandNames = [Command.AddVatsim.toString(), Command.RemoveVatsim.toString(), Command.VatsimRegistration.toString()];
             const adminCommands = Array.from(commands?.values() ?? []).filter(c => adminCommandNames.includes(c.name));
 
             for (const command of adminCommands) {
@@ -155,6 +160,8 @@ export class DiscordGuild {
                 return this.onRemoveVatsimCommand(interaction);
             case Command.UnlinkVatsim:
                 return this.onUnlinkVatsimCommand(interaction);
+            case Command.VatsimRegistration:
+                return this.onVatsimRegistrationCommand(interaction);
             default:
                 throw new Error(`Unsupported Discord command: ${interaction.commandName}`);
         }
@@ -230,6 +237,53 @@ export class DiscordGuild {
 
         await interaction.reply({
             content: 'Your VATSIM activity will be removed within a few minutes.',
+            ephemeral: true
+        });
+    }
+
+    private async onVatsimRegistrationCommand(interaction: CommandInteraction): Promise<void> {
+        const [discordUsers, guildMembers] = await Promise.all([
+            this.userManager.getUsers(),
+            interaction.guild?.members.fetch()
+        ]);
+
+        const guildUsers = discordUsers.map(u => ({
+            user: u,
+            guildMember: guildMembers?.find(m => m.id == u.discordId)
+        }))
+            .filter(u => !!u.guildMember)
+            .sort((x, y) => this.getUsername(x.user, x.guildMember).localeCompare(this.getUsername(y.user, y.guildMember)));
+
+        const externalUsers = discordUsers.map(u => ({
+            user: u,
+            guildMember: guildMembers?.find(m => m.id == u.discordId)
+        }))
+            .filter(u => !u.guildMember)
+            .sort((x, y) => this.getUsername(x.user, x.guildMember).localeCompare(this.getUsername(y.user, y.guildMember)));
+
+        let content = '';
+
+        content += `**${interaction.guild?.name ?? 'Server'} VATSIM Users**\n`;
+        content += '```';
+
+        if (guildUsers?.length)
+            content += guildUsers.map(u => `${this.getUsername(u.user, u.guildMember)} (${u.user.vatsimId})\n`).join('');
+        else
+            content += 'There are no users currently registered.\n';
+
+        content += '```\n';
+        content += '**External VATSIM Users**\n';
+        content += '```';
+
+        if (externalUsers?.length)
+            content += externalUsers.map(u => `${this.getUsername(u.user, u.guildMember)} (${u.user.vatsimId})\n`).join('');
+        else
+            content += 'There are no users currently registered.\n';
+
+        content += '```\n';
+
+        await interaction.reply({
+            content: content,
             ephemeral: true
         });
     }
@@ -310,10 +364,6 @@ export class DiscordGuild {
             this.vatsimClient.getData()
         ]);
 
-        function getUsername(user: User, guildMember?: GuildMember): string {
-            return guildMember?.nickname ?? guildMember?.user?.username ?? user.username ?? '';
-        }
-
         function getMaxLength(values: Array<string | undefined>): number {
             return values.reduce((maxLength, value) => {
                 const length = value?.length ?? 0;
@@ -356,14 +406,14 @@ export class DiscordGuild {
                 pilot: vatsimData?.pilots?.find(p => p.id == u.vatsimId)
             }))
                 .filter(u => !!u.pilot)
-                .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
+                .sort((x, y) => this.getUsername(x.user, x.guildMember).localeCompare(this.getUsername(y.user, y.guildMember)));
 
             content += '**Flights**\n';
             content += '```';
 
             if (pilotUsers.length) {
                 const progressIntervals = 20;
-                const usernameColumn = getColumn(' User', getMaxLength(pilotUsers.map(u => getUsername(u.user, u.guildMember))) + 1, columnSeparator);
+                const usernameColumn = getColumn(' User', getMaxLength(pilotUsers.map(u => this.getUsername(u.user, u.guildMember))) + 1, columnSeparator);
                 const callsignColumn = getColumn('ID', getMaxLength(pilotUsers.map(u => u.pilot?.callsign)), columnSeparator);
                 const aircraftColumn = getColumn('A/C', getMaxLength(pilotUsers.map(u => u.pilot?.flightPlan?.aircraftShort)), columnSeparator);
                 const departureColumn = getColumn('DEP', 4, 1 + progressIntervals + 1);
@@ -383,7 +433,7 @@ export class DiscordGuild {
                 for (const pilotUser of pilotUsers) {
                     let row = '';
 
-                    row += addValue(usernameColumn, (pilotUser.guildMember ? '*' : ' ') + getUsername(pilotUser.user, pilotUser.guildMember));
+                    row += addValue(usernameColumn, (pilotUser.guildMember ? '*' : ' ') + this.getUsername(pilotUser.user, pilotUser.guildMember));
                     row += addValue(callsignColumn, pilotUser.pilot?.callsign);
                     row += addValue(aircraftColumn, pilotUser.pilot?.flightPlan?.aircraftShort);
 
@@ -430,10 +480,10 @@ export class DiscordGuild {
                 controller: vatsimData?.controllers?.find(c => c.id == u.vatsimId && c.callsign.includes('_') && !c.callsign.toLowerCase().endsWith('_atis'))
             }))
                 .filter(u => !!u.controller)
-                .sort((x, y) => getUsername(x.user, x.guildMember).localeCompare(getUsername(y.user, y.guildMember)));
+                .sort((x, y) => this.getUsername(x.user, x.guildMember).localeCompare(this.getUsername(y.user, y.guildMember)));
 
             if (controllerUsers.length) {
-                const usernameColumn = getColumn(' User', getMaxLength(controllerUsers.map(u => getUsername(u.user, u.guildMember))) + 1, columnSeparator);
+                const usernameColumn = getColumn(' User', getMaxLength(controllerUsers.map(u => this.getUsername(u.user, u.guildMember))) + 1, columnSeparator);
                 const callsignColumn = getColumn('ID', getMaxLength(controllerUsers.map(u => u.controller?.callsign)), columnSeparator);
                 const onlineColumn = getColumn('Online', 6, 0);
 
@@ -449,7 +499,7 @@ export class DiscordGuild {
                 for (const controllerUser of controllerUsers) {
                     let row = '';
 
-                    row += addValue(usernameColumn, (controllerUser.guildMember ? '*' : ' ') + getUsername(controllerUser.user, controllerUser.guildMember));
+                    row += addValue(usernameColumn, (controllerUser.guildMember ? '*' : ' ') + this.getUsername(controllerUser.user, controllerUser.guildMember));
                     row += addValue(callsignColumn, controllerUser.controller?.callsign);
                     row += addValue(onlineColumn, controllerUser?.controller?.onlineSince ? DateTime.utc().diff(DateTime.fromJSDate(controllerUser.controller?.onlineSince)).toFormat('hh:mm') : '');
 
@@ -467,5 +517,9 @@ export class DiscordGuild {
             content += `Unable to retriev_VATSIM data as of ${DateTime.now().toFormat('yyyy-MM-dd HHmm')}Z_`;
 
         return content;
+    }
+
+    private getUsername(user: User, guildMember?: GuildMember): string {
+        return guildMember?.nickname ?? guildMember?.user?.username ?? user.username ?? '';
     }
 }
