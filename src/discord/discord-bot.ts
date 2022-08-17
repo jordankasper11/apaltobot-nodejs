@@ -1,4 +1,4 @@
-import { Client, Intents } from 'discord.js';
+import { Client } from 'discord.js';
 import { DiscordConfig } from '../config';
 import { AviationUtility } from '../aviation/aviation-utility';
 import { VatsimClient } from '../vatsim/vatsim-client';
@@ -29,8 +29,8 @@ export class DiscordBot {
 
         const client = new Client({
             intents: [
-                Intents.FLAGS.GUILDS,
-                Intents.FLAGS.GUILD_MEMBERS
+                'Guilds',
+                'GuildMembers'
             ]
         });
 

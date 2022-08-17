@@ -19,7 +19,7 @@ enum Command {
 }
 
 function isTextChannel(channel: Channel): channel is TextChannel {
-    return channel.isText();
+    return channel.isTextBased();
 }
 
 export class DiscordGuild {
@@ -50,8 +50,6 @@ export class DiscordGuild {
 
             if (!guild)
                 throw new Error(`Guild ${this.config.guildId} not found`);
-            else if (guild.deleted)
-                throw new Error(`Guild ${this.config.guildId} is deleted`);
 
             await this.registerCommands();
             await this.scheduleUpdates(client, updateListingInterval);
@@ -85,23 +83,22 @@ export class DiscordGuild {
                 .setDescription('Unlink your VATSIM account')
         ];
 
+        console.log('ADMIN COMMANDS: ' + this.config.adminCommands);
+
         if (this.config.adminCommands) {
             commands.push(
                 new SlashCommandBuilder()
                     .setName(Command.AddVatsim)
                     .setDescription('Add a VATSIM user')
                     .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true))
-                    .addStringOption(option => option.setName('username').setDescription('Username').setRequired(true))
-                    .setDefaultPermission(false),
+                    .addStringOption(option => option.setName('username').setDescription('Username').setRequired(true)),
                 new SlashCommandBuilder()
                     .setName(Command.RemoveVatsim)
                     .setDescription('Remove a VATSIM user')
-                    .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true))
-                    .setDefaultPermission(false),
+                    .addIntegerOption(option => option.setName('cid').setDescription('VATSIM CID').setRequired(true)),
                 new SlashCommandBuilder()
                     .setName(Command.VatsimRegistration)
                     .setDescription('View VATSIM user registration data')
-                    .setDefaultPermission(false)
             );
         }
 
@@ -136,8 +133,8 @@ export class DiscordGuild {
     }
 
     private async onAddVatsimCommand(interaction: CommandInteraction): Promise<void> {
-        const cid = interaction.options.getInteger('cid');
-        const username = interaction.options.getString('username');
+        const cid = interaction.options.get('cid')?.value as number | null;
+        const username = interaction.options.get('username')?.value as string | null;
 
         if (!cid)
             throw new Error(`cid argument is required for ${Command.AddVatsim} Discord command`);
@@ -159,7 +156,7 @@ export class DiscordGuild {
     }
 
     private async onLinkVatsimCommand(interaction: CommandInteraction): Promise<void> {
-        const cid = interaction.options.getInteger('cid');
+        const cid = interaction.options.get('cid')?.value as number | null;
 
         if (!cid)
             throw new Error(`cid argument is required for ${Command.LinkVatsim} Discord command`);
@@ -179,7 +176,7 @@ export class DiscordGuild {
     }
 
     private async onRemoveVatsimCommand(interaction: CommandInteraction): Promise<void> {
-        const vatsimId = interaction.options.getInteger('cid') ?? undefined;
+        const vatsimId = interaction.options.get('cid') as number | null ?? undefined;
         const userFilter = { vatsimId };
         const user = await this.userManager.getUser(userFilter);
 
@@ -264,8 +261,6 @@ export class DiscordGuild {
 
         if (!channel)
             throw new Error(`Channel ${this.config.channelId} not found`);
-        else if (channel.deleted)
-            throw new Error(`Channel ${this.config.channelId} is deleted`);
         else if (!isTextChannel(channel))
             throw new Error(`Channel ${this.config.channelId} is not a text channel`);
 
@@ -282,7 +277,7 @@ export class DiscordGuild {
 
             if (this.listingMessageId) {
                 try {
-                    message = await channel.messages.fetch(this.listingMessageId, { cache: false, force: true });
+                    message = await channel.messages.fetch(this.listingMessageId);
                 } catch {
                     this.listingMessageId = undefined;
 
@@ -482,10 +477,12 @@ export class DiscordGuild {
         if (vatsimData)
             content += `_VATSIM data last updated on ${DateTime.fromJSDate(vatsimData.overview.lastUpdated).toFormat('yyyy-MM-dd HHmm')}Z._`;
         else
-            content += `Unable to retriev_VATSIM data as of ${DateTime.now().toFormat('yyyy-MM-dd HHmm')}Z_`;
+            content += `Unable to retrieve VATSIM data on ${DateTime.now().toFormat('yyyy-MM-dd HHmm')}Z_`;
 
         if (this.config.name === 'The Cab')
             content += ' _If this channel still exists, know you are missed._ :heart:';
+
+        content += '\n\n_Last code update on 2022-08-16 to work with breaking changes made in Discord API._';
 
         return content;
     }
