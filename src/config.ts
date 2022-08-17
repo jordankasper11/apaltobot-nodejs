@@ -44,7 +44,7 @@ export interface DiscordGuildConfig {
     readonly name: string;
     readonly guildId: string;
     readonly channelId: string;
-    readonly adminRoleId?: string;
+    readonly adminCommands?: boolean;
     readonly displayFlights: boolean;
     readonly displayControllers: boolean;
 }

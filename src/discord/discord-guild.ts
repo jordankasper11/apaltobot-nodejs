@@ -1,4 +1,4 @@
-import { ApplicationCommandPermissionData, Channel, Client, CommandInteraction, Guild, GuildMember, Message, TextChannel } from 'discord.js';
+import { Channel, Client, CommandInteraction, Guild, GuildMember, Message, TextChannel } from 'discord.js';
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
@@ -53,7 +53,7 @@ export class DiscordGuild {
             else if (guild.deleted)
                 throw new Error(`Guild ${this.config.guildId} is deleted`);
 
-            await this.registerCommands(client);
+            await this.registerCommands();
             await this.scheduleUpdates(client, updateListingInterval);
 
             client.on('interactionCreate', async (interaction) => {
@@ -74,7 +74,7 @@ export class DiscordGuild {
             clearInterval(this.updateListingTimer);
     }
 
-    private async registerCommands(client: Client): Promise<void> {
+    private async registerCommands(): Promise<void> {
         const commands = [
             new SlashCommandBuilder()
                 .setName(Command.LinkVatsim)
@@ -85,7 +85,7 @@ export class DiscordGuild {
                 .setDescription('Unlink your VATSIM account')
         ];
 
-        if (this.config.adminRoleId) {
+        if (this.config.adminCommands) {
             commands.push(
                 new SlashCommandBuilder()
                     .setName(Command.AddVatsim)
@@ -113,38 +113,6 @@ export class DiscordGuild {
             logInfo(this.config.name, 'Registered Discord commands');
         } catch (error) {
             logError(this.config.name, 'Error registering Discord commands', error);
-
-            throw error;
-        }
-
-        if (this.config.adminRoleId)
-            await this.setAdminCommandPermissions(client);
-    }
-
-    private async setAdminCommandPermissions(client: Client): Promise<void> {
-        if (!this.config.adminRoleId)
-            return;
-
-        try {
-            const commands = await client.guilds.cache.get(this.config.guildId)?.commands.fetch();
-            const adminCommandNames = [Command.AddVatsim.toString(), Command.RemoveVatsim.toString(), Command.VatsimRegistration.toString()];
-            const adminCommands = Array.from(commands?.values() ?? []).filter(c => adminCommandNames.includes(c.name));
-
-            for (const command of adminCommands) {
-                const permissions: Array<ApplicationCommandPermissionData> = [
-                    {
-                        id: this.config.adminRoleId,
-                        type: 'ROLE',
-                        permission: true
-                    }
-                ];
-
-                await command.permissions.set({ permissions });
-            }
-
-            logInfo(this.config.name, 'Set Discord command permissions');
-        } catch (error) {
-            logError(this.config.name, 'Error setting Discord command permissions', error);
 
             throw error;
         }
@@ -512,9 +480,12 @@ export class DiscordGuild {
         }
 
         if (vatsimData)
-            content += `_VATSIM data last updated on ${DateTime.fromJSDate(vatsimData.overview.lastUpdated).toFormat('yyyy-MM-dd HHmm')}Z_`;
+            content += `_VATSIM data last updated on ${DateTime.fromJSDate(vatsimData.overview.lastUpdated).toFormat('yyyy-MM-dd HHmm')}Z._`;
         else
             content += `Unable to retriev_VATSIM data as of ${DateTime.now().toFormat('yyyy-MM-dd HHmm')}Z_`;
+
+        if (this.config.name === 'The Cab')
+            content += ' _If this channel still exists, know you are missed._ :heart:';
 
         return content;
     }

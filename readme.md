@@ -28,8 +28,6 @@ The following environment variables are required, either in a `.env` file create
 
 - AVIATION_AIRPORTS_JSON_PATH
   - This is the path to the `airports.json` file, which lives in `./data` by default.
-- DISCORD_ADMIN_ROLE_ID
-  - This is an *optional* value specifying the snowflake of a Discord role. When specified, the `/addvatsim` and `/removevatsim` commands will be available to users with that role.
 - DISCORD_APPLICATION_ID
   - This is the `Application ID` value of your Discord application.
 - DISCORD_GUILDS_JSON_PATH
@@ -75,14 +73,14 @@ The Discord guilds configuration file specified by the `DISCORD_GUILDS_JSON_PATH
         "name": "Discord Guild Name",
         "guildId": "000000000000000",
         "channelId": "000000000000000",
-        "adminRoleId": "000000000000000",
+        "adminCommands": true,
         "displayFlights": true,
         "displayControllers": true
     }
 ]
 ```
 
-All properties are required except for `adminRoleId`, which is optional. For more information, see the [Environment Variables](environment-variables) section.
+All properties are required except for `adminCommands`, which is optional.
 
 *Note: The `name` property will be used to generate the file name for JSON file container user data.*
 

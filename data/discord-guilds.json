@@ -2,8 +2,8 @@
     {
         "name": "Aplato Dev",
         "guildId": "845109830275825694",
-        "channelId": "845109830275825697",
-        "adminRoleId": "899108994591903775",
+        "channelId": "1009253530818850946",
+        "adminRoles": true,
         "displayFlights": true,
         "displayControllers": true
     }
