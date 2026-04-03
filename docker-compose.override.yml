@@ -3,3 +3,5 @@ services:
   apaltobot:
     build:
       context: .
+    volumes:
+      - './data:/data'
