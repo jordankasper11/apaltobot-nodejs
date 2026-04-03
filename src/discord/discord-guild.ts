@@ -480,9 +480,9 @@ export class DiscordGuild {
             content += `Unable to retrieve VATSIM data on ${DateTime.now().toFormat('yyyy-MM-dd HHmm')}Z_`;
 
         if (this.config.name === 'The Cab')
-            content += ' _If this channel still exists, know you are missed._ :heart:';
+            content += ' _Know you are missed and appreciated._ :heart:';
 
-        content += '\n\n_Last code update on 2022-08-16 to work with breaking changes made in Discord API._';
+        content += '\n\n_Last code update on 2026-04-03 to update package versions and deploy with Coolify._';
 
         return content;
     }
