@@ -1,5 +1,5 @@
 version: '3.9'
-services:     
+services:
   apaltobot:
     container_name: 'apaltobot'
     build:
@@ -8,8 +8,16 @@ services:
     volumes:
       - './data:/data'
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       - AVIATION_AIRPORTS_JSON_PATH=/data/airports.json
       - DISCORD_GUILDS_JSON_PATH=/data/discord-guilds.json
       - USERS_JSON_PATH=/data/users
+      - DISCORD_APPLICATION_ID=${DISCORD_APPLICATION_ID}
+      - DISCORD_PUBLIC_KEY=${DISCORD_PUBLIC_KEY}
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_UPDATE_LISTING_INTERVAL=60000
+      - USERS_SAVE_INTERVAL=15000
+      - VATSIM_DATA_URL=https://data.vatsim.net/v3/vatsim-data.json
+      - VATSIM_DATA_REFRESH_INTERVAL=120000
