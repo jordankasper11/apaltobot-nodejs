@@ -2,7 +2,9 @@ version: '3.9'
 services:
   apaltobot:
     container_name: 'apaltobot'
-    image: ghcr.io/jordankasper11/apaltobot-nodejs:latest    
+    image: ghcr.io/jordankasper11/apaltobot-nodejs:latest
+    volumes:
+      - '/mnt/volume_nyc3_01/apaltobot:/data'
     env_file:
       - path: .env
         required: false
