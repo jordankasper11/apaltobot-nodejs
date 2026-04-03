@@ -2,9 +2,7 @@ version: '3.9'
 services:
   apaltobot:
     container_name: 'apaltobot'
-    build:
-      context: .
-    image: docker.pkg.github.com/jordankasper11/apaltobot-node/apaltobot
+    image: ghcr.io/jordankasper11/apaltobot-nodejs:latest
     volumes:
       - './data:/data'
     env_file:
