@@ -34,7 +34,7 @@ export class DiscordBot {
             ]
         });
 
-        client.once('ready', () => this.onReady(client));
+        client.once('clientReady', () => this.onReady(client));
 
         await client.login(this.config.token);
 
