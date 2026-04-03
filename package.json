@@ -8,27 +8,27 @@
     "scripts": {
         "build": "npm run lint && tsc -p tsconfig.json",
         "build:watch": "npm run lint && tsc -p tsconfig.json --watch",
-        "lint": "eslint . --ext .ts --max-warnings=0",
+        "lint": "eslint --max-warnings=0",
         "serve": "node ./dist/index.js",
         "start": "npm run build && npm run serve"
     },
     "dependencies": {
-        "@discordjs/builders": "^1.1.0",
-        "@discordjs/rest": "^1.0.1",
-        "@types/luxon": "^3.0.0",
-        "axios": "^0.27.2",
-        "discord-api-types": "^0.37.2",
-        "discord.js": "^14.2.0",
-        "dotenv": "^16.0.1",
-        "geolib": "^3.3.3",
-        "inversify": "^6.0.1",
-        "luxon": "^3.0.1",
-        "reflect-metadata": "^0.1.13"
+        "@discordjs/builders": "^1.14.1",
+        "@discordjs/rest": "^2.6.1",
+        "@types/luxon": "^3.7.1",
+        "axios": "^1.14.0",
+        "discord-api-types": "^0.38.44",
+        "discord.js": "^14.26.1",
+        "dotenv": "^17.4.0",
+        "geolib": "^3.3.14",
+        "inversify": "^8.1.0",
+        "luxon": "^3.7.2",
+        "reflect-metadata": "^0.2.2"
     },
     "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "^5.0.0",
-        "@typescript-eslint/parser": "^5.0.0",
-        "eslint": "^8.0.1",
-        "typescript": "^4.4.4"
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.2.0",
+        "typescript": "^6.0.2",
+        "typescript-eslint": "^8.58.0"
     }
 }

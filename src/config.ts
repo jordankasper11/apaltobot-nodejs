@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { logGlobalError, logGlobalInfo } from './logging';

@@ -1,8 +1,9 @@
 {
     "compilerOptions": {
         "outDir": "dist",
-        "target": "es5",
-        "lib": ["es6"],
+        "rootDir": "src",
+        "target": "ES2022",
+        "lib": ["ES2022"],
         "types": ["reflect-metadata"],
         "module": "commonjs",
         "strict": true,

@@ -1,7 +1,7 @@
-import { Channel, Client, CommandInteraction, Guild, GuildMember, Message, TextChannel } from 'discord.js';
+import { Channel, ChatInputCommandInteraction, Client, Guild, GuildMember, Message, TextChannel } from 'discord.js';
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v9';
+import { Routes } from 'discord-api-types/v10';
 import { getDistance } from 'geolib';
 import { DateTime } from 'luxon';
 import { DiscordGuildConfig } from '../config';
@@ -29,7 +29,7 @@ export class DiscordGuild {
     private readonly userManager: UserManager;
     private readonly vatsimClient: VatsimClient;
     private readonly aviationUtility: AviationUtility;
-    private updateListingTimer?: NodeJS.Timer;
+    private updateListingTimer?: ReturnType<typeof setInterval>;
     private listingMessageId?: string;
 
     constructor(config: DiscordGuildConfig, discordApplicationId: string, discordToken: string, userManagerFactory: UserManagerFactory, vatsimClient: VatsimClient, aviationUtility: AviationUtility) {
@@ -55,7 +55,7 @@ export class DiscordGuild {
             await this.scheduleUpdates(client, updateListingInterval);
 
             client.on('interactionCreate', async (interaction) => {
-                if (interaction.guildId != this.config.guildId || !interaction.isCommand())
+                if (interaction.guildId != this.config.guildId || !interaction.isChatInputCommand())
                     return;
 
                 await this.handleCommand(interaction);
@@ -102,7 +102,7 @@ export class DiscordGuild {
             );
         }
 
-        const rest = new REST({ version: '9' }).setToken(this.discordToken);
+        const rest = new REST({ version: '10' }).setToken(this.discordToken);
 
         try {
             await rest.put(Routes.applicationGuildCommands(this.discordApplicationId, this.config.guildId), { body: commands.map(c => c.toJSON()) });
@@ -115,7 +115,7 @@ export class DiscordGuild {
         }
     }
 
-    private handleCommand(interaction: CommandInteraction): Promise<void> {
+    private handleCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         switch (interaction.commandName) {
             case Command.AddVatsim:
                 return this.onAddVatsimCommand(interaction);
@@ -132,7 +132,7 @@ export class DiscordGuild {
         }
     }
 
-    private async onAddVatsimCommand(interaction: CommandInteraction): Promise<void> {
+    private async onAddVatsimCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         const cid = interaction.options.get('cid')?.value as number | null;
         const username = interaction.options.get('username')?.value as string | null;
 
@@ -155,7 +155,7 @@ export class DiscordGuild {
         });
     }
 
-    private async onLinkVatsimCommand(interaction: CommandInteraction): Promise<void> {
+    private async onLinkVatsimCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         const cid = interaction.options.get('cid')?.value as number | null;
 
         if (!cid)
@@ -175,7 +175,7 @@ export class DiscordGuild {
         });
     }
 
-    private async onRemoveVatsimCommand(interaction: CommandInteraction): Promise<void> {
+    private async onRemoveVatsimCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         const vatsimId = interaction.options.get('cid') as number | null ?? undefined;
         const userFilter = { vatsimId };
         const user = await this.userManager.getUser(userFilter);
@@ -197,7 +197,7 @@ export class DiscordGuild {
         });
     }
 
-    private async onUnlinkVatsimCommand(interaction: CommandInteraction): Promise<void> {
+    private async onUnlinkVatsimCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         await this.userManager.deleteUser({ discordId: interaction.member?.user.id });
 
         await interaction.reply({
@@ -206,7 +206,7 @@ export class DiscordGuild {
         });
     }
 
-    private async onVatsimRegistrationCommand(interaction: CommandInteraction): Promise<void> {
+    private async onVatsimRegistrationCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         const [discordUsers, guildMembers] = await Promise.all([
             this.userManager.getUsers(),
             interaction.guild?.members.fetch()

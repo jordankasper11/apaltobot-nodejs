@@ -1,37 +1,12 @@
 [
     {
-        "discordId": "349695726261108738",
-        "username": "Aplato",
-        "vatsimId": 1524038
-    },
-    {
-        "discordId": "505876479822004255",
-        "username": "WrongDiamond",
-        "vatsimId": 1473980
-    },
-    {
-        "discordId": "889000539839422485",
-        "username": "Jackson Choran (JC)",
-        "vatsimId": 1476323
-    },
-    {
         "discordId": "552992141589086208",
         "username": "Orthoflyer",
         "vatsimId": 1529937
     },
     {
-        "discordId": "529100636906586133",
-        "username": "arson master",
-        "vatsimId": 1540841
-    },
-    {
-        "discordId": "774729378076295169",
-        "username": "adam_aviation_geek",
-        "vatsimId": 1504110
-    },
-    {
         "discordId": "710109436861218907",
-        "username": "k2fc",
+        "username": "Dennis Graiani",
         "vatsimId": 1100596
     },
     {
@@ -46,13 +21,8 @@
     },
     {
         "discordId": "729877482391732274",
-        "username": "Vaughn | Michigan_Aviation",
+        "username": "Vaughn Hoffmeyer",
         "vatsimId": 1489575
-    },
-    {
-        "discordId": "553442605783056384",
-        "username": "emlockwood",
-        "vatsimId": 1459442
     },
     {
         "discordId": "447525651352911873",
@@ -60,11 +30,128 @@
         "vatsimId": 1485279
     },
     {
+        "discordId": "889000539839422485",
+        "username": "Jackson Choran",
+        "vatsimId": 1476323
+    },
+    {
+        "discordId": "505876479822004255",
+        "username": "WrongDiamond",
+        "vatsimId": 1473980
+    },
+    {
+        "discordId": "774729378076295169",
+        "username": "adam_aviation_geek",
+        "vatsimId": 1504110
+    },
+    {
         "username": "sh3ed",
         "vatsimId": 1052572
     },
     {
+        "discordId": "349695726261108738",
+        "username": "Aplato",
+        "vatsimId": 1524038
+    },
+    {
+        "discordId": "123934848225116160",
         "username": "thebetterCP",
         "vatsimId": 1426527
+    },
+    {
+        "username": "DigitalEngineer",
+        "vatsimId": 1409680
+    },
+    {
+        "discordId": "269192331352080385",
+        "username": "Dhagash Kapadia",
+        "vatsimId": 1299471
+    },
+    {
+        "discordId": "755064907506122766",
+        "username": "tgol",
+        "vatsimId": 1468995
+    },
+    {
+        "discordId": "593707693504462881",
+        "username": "Ajenkins34",
+        "vatsimId": 1462073
+    },
+    {
+        "discordId": "779861157598986260",
+        "username": "Peter May",
+        "vatsimId": 1530698
+    },
+    {
+        "username": "Hochmania",
+        "vatsimId": 1483553
+    },
+    {
+        "username": "arson master",
+        "vatsimId": 1540841
+    },
+    {
+        "username": "LaGuardia John",
+        "vatsimId": 1530081
+    },
+    {
+        "username": "hi15td",
+        "vatsimId": 1430265
+    },
+    {
+        "username": "Evan Reiter",
+        "vatsimId": 1314720
+    },
+    {
+        "username": "Hawks1326",
+        "vatsimId": 852099
+    },
+    {
+        "username": "CraftyAviation",
+        "vatsimId": 1475805
+    },
+    {
+        "username": "The Flying Fabio",
+        "vatsimId": 826873
+    },
+    {
+        "username": "SquawkSavage",
+        "vatsimId": 1478446
+    },
+    {
+        "username": "Fliggity1976",
+        "vatsimId": 1531793
+    },
+    {
+        "username": "Icecold6k",
+        "vatsimId": 1148860
+    },
+    {
+        "username": "TidesBR",
+        "vatsimId": 1476924
+    },
+    {
+        "username": "Bryan Baird",
+        "vatsimId": 1730644
+    },
+    {
+        "username": "phazetex",
+        "vatsimId": 1505230
+    },
+    {
+        "username": "Money on RAGE",
+        "vatsimId": 1639921
+    },
+    {
+        "username": "NewEnglandAviator",
+        "vatsimId": 1321911
+    },
+    {
+        "username": "PhDIPO",
+        "vatsimId": 1617409
+    },
+    {
+        "username": "DrthD3NN15",
+        "vatsimId": 1701032
     }
 ]
