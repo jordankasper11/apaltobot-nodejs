@@ -3,6 +3,7 @@ services:
   apaltobot:
     container_name: 'apaltobot'
     image: ghcr.io/jordankasper11/apaltobot-nodejs:latest
+    pull_policy: always
     volumes:
       - '/mnt/volume_nyc3_01/apaltobot:/data'
     env_file:
