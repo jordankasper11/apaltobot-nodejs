@@ -13,11 +13,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Validate secrets
+      env:
+        COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+        COOLIFY_WEBHOOK_URL: ${{ vars.COOLIFY_WEBHOOK_URL }}
+      run: |
+        missing=""
+        [[ -z "$COOLIFY_API_TOKEN" ]] && missing="$missing COOLIFY_API_TOKEN"
+        [[ -z "$COOLIFY_WEBHOOK_URL" ]] && missing="$missing COOLIFY_WEBHOOK_URL"
+        if [[ -n "$missing" ]]; then
+          echo "::error::Missing required secrets:$missing"
+          exit 1
+        fi
+        echo "All required secrets are present"
     - name: Build and push Docker image
       env:
-        DOCKER_USER: ${{ github.actor }}
         DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        DOCKER_USER: ${{ github.actor }}
       run: |
         docker login ghcr.io -u $DOCKER_USER -p $DOCKER_PASSWORD
         docker build . --file Dockerfile --tag ghcr.io/jordankasper11/apaltobot-nodejs:latest
         docker push ghcr.io/jordankasper11/apaltobot-nodejs:latest
+    - name: Trigger Coolify deployment
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: |
+        curl --silent --show-error --fail \
+          -X GET "${{ vars.COOLIFY_WEBHOOK_URL }}" \
+          -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}"
